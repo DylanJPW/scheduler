@@ -12,7 +12,7 @@
 	<artifactId>scheduler-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>scheduler-backend</name>
-	<description>Backend for scheduler app using Timefold Solver</description>
+	<description>Backend for scheduler app using OptaPlanner</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -28,8 +28,20 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<timefold-solver.version>1.32.0</timefold-solver.version>
+		<version.org.optaplanner>10.1.0</version.org.optaplanner>
 	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.optaplanner</groupId>
+				<artifactId>optaplanner-bom</artifactId>
+				<version>${version.org.optaplanner}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -40,8 +52,8 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>ai.timefold.solver</groupId>
-			<artifactId>timefold-solver-spring-boot-starter</artifactId>
+			<groupId>org.optaplanner</groupId>
+			<artifactId>optaplanner-spring-boot-starter</artifactId>
 		</dependency>
 
 		<dependency>
@@ -54,18 +66,14 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Source: https://mvnrepository.com/artifact/org.optaplanner/optaplanner-core -->
+		<dependency>
+			<groupId>org.optaplanner</groupId>
+			<artifactId>optaplanner-core</artifactId>
+			<version>10.1.0</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>ai.timefold.solver</groupId>
-				<artifactId>timefold-solver-bom</artifactId>
-				<version>${timefold-solver.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<build>
 		<plugins>
