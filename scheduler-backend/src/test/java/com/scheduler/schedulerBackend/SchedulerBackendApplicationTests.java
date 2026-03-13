@@ -1,4 +1,4 @@
-package com.scheduler.scheduler_backend;
+package com.scheduler.schedulerBackend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

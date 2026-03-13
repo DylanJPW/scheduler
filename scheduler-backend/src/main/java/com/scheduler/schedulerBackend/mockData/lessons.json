@@ -1,0 +1,140 @@
+[
+  {
+    "id": 1,
+    "instrument": "GUITAR",
+    "teacher": {
+      "name": "John",
+      "instruments": [
+        "GUITAR"
+      ]
+    },
+    "students": [
+      {
+        "name": "Fool 1",
+        "instrument": "GUITAR",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 1",
+        "instrument": "GUITAR",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 1",
+        "instrument": "GUITAR",
+        "skillLevel": "ADVANCED"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "instrument": "BANJO",
+    "teacher": {
+      "name": "John Joe",
+      "instruments": [
+        "BANJO",
+        "WHISTLE"
+      ]
+    },
+    "students": [
+      {
+        "name": "Fool 2",
+        "instrument": "BANJO",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 2",
+        "instrument": "BANJO",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 2",
+        "instrument": "BANJO",
+        "skillLevel": "ADVANCED"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "instrument": "WHISTLE",
+    "teacher": {
+      "name": "Joe",
+      "instruments": [
+        "WHISTLE"
+      ]
+    },
+    "students": [
+      {
+        "name": "Fool 3",
+        "instrument": "WHISTLE",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 3",
+        "instrument": "WHISTLE",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 3",
+        "instrument": "WHISTLE",
+        "skillLevel": "ADVANCED"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "instrument": "FLUTE",
+    "teacher": {
+      "name": "Paul",
+      "instruments": [
+        "GUITAR",
+        "WHISTLE",
+        "FLUTE"
+      ]
+    },
+    "students": [
+      {
+        "name": "Fool 4",
+        "instrument": "FLUTE",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 4",
+        "instrument": "FLUTE",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 4",
+        "instrument": "FLUTE",
+        "skillLevel": "ADVANCED"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "instrument": "FIDDLE",
+    "teacher": {
+      "name": "John Paul",
+      "instruments": [
+        "FIDDLE"
+      ]
+    },
+    "students": [
+      {
+        "name": "Fool 5",
+        "instrument": "FIDDLE",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 5",
+        "instrument": "FIDDLE",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 5",
+        "instrument": "FIDDLE",
+        "skillLevel": "ADVANCED"
+      }
+    ]
+  }
+]
