@@ -12,6 +12,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
         return new Constraint[] {
                 // Hard constraints
                 teacherConflict(constraintFactory),
+                teacherLacksInstrument(constraintFactory),
         };
     }
 
@@ -24,5 +25,13 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                         Joiners.lessThan(Lesson::getId))
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Teacher Conflict");
+    }
+
+    private Constraint teacherLacksInstrument(ConstraintFactory constraintFactory) {
+        // A teacher can only teach what they can play
+        return constraintFactory.forEach(Lesson.class)
+                .filter(lesson -> !lesson.getTeacher().getInstruments().contains(lesson.getInstrument()))
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Teacher Lacks Instrument");
     }
 }
