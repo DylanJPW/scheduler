@@ -16,6 +16,10 @@ public class TimeTable {
     @ProblemFactCollectionProperty
     private List<Timeslot> timeslotList;
 
+    @ValueRangeProvider
+    @ProblemFactCollectionProperty
+    private List<Teacher> teacherList;
+
     @PlanningEntityCollectionProperty
     private List<Lesson> lessonList;
 
@@ -25,8 +29,9 @@ public class TimeTable {
     public TimeTable() {
     }
 
-    public TimeTable(List<Timeslot> timeslotList, List<Lesson> lessonList) {
+    public TimeTable(List<Timeslot> timeslotList, List<Teacher> teacherList, List<Lesson> lessonList) {
         this.timeslotList = timeslotList;
+        this.teacherList = teacherList;
         this.lessonList = lessonList;
     }
 
@@ -36,6 +41,10 @@ public class TimeTable {
 
     public List<Lesson> getLessonList() {
         return lessonList;
+    }
+
+    public List<Teacher> getTeacherList() {
+        return teacherList;
     }
 
     public HardSoftScore getScore() {

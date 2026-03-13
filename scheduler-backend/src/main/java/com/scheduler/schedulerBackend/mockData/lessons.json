@@ -2,12 +2,6 @@
   {
     "id": 1,
     "instrument": "GUITAR",
-    "teacher": {
-      "name": "John",
-      "instruments": [
-        "GUITAR"
-      ]
-    },
     "students": [
       {
         "name": "Fool 1",
@@ -29,13 +23,6 @@
   {
     "id": 2,
     "instrument": "BANJO",
-    "teacher": {
-      "name": "John Joe",
-      "instruments": [
-        "BANJO",
-        "WHISTLE"
-      ]
-    },
     "students": [
       {
         "name": "Fool 2",
@@ -57,12 +44,6 @@
   {
     "id": 3,
     "instrument": "WHISTLE",
-    "teacher": {
-      "name": "Joe",
-      "instruments": [
-        "WHISTLE"
-      ]
-    },
     "students": [
       {
         "name": "Fool 3",
@@ -84,14 +65,6 @@
   {
     "id": 4,
     "instrument": "FLUTE",
-    "teacher": {
-      "name": "Paul",
-      "instruments": [
-        "GUITAR",
-        "WHISTLE",
-        "FLUTE"
-      ]
-    },
     "students": [
       {
         "name": "Fool 4",
@@ -113,12 +86,6 @@
   {
     "id": 5,
     "instrument": "FIDDLE",
-    "teacher": {
-      "name": "John Paul",
-      "instruments": [
-        "FIDDLE"
-      ]
-    },
     "students": [
       {
         "name": "Fool 5",
