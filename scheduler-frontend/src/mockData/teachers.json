@@ -1,0 +1,50 @@
+[
+  {
+    "name": "John",
+    "instruments": [
+      "GUITAR"
+    ]
+  },
+  {
+    "name": "Joe",
+    "instruments": [
+      "WHISTLE"
+    ]
+  },
+  {
+    "name": "John Joe",
+    "instruments": [
+      "BANJO",
+      "WHISTLE"
+    ]
+  },
+  {
+    "name": "Paul",
+    "instruments": [
+      "GUITAR",
+      "WHISTLE",
+      "FLUTE"
+    ]
+  },
+  {
+    "name": "John Paul",
+    "instruments": [
+      "FIDDLE"
+    ]
+  },
+  {
+    "name": "Jane",
+    "instruments": [
+      "WHISTLE",
+      "FLUTE"
+    ]
+  },
+  {
+    "name": "Janette",
+    "instruments": [
+      "GUITAR",
+      "BANJO"
+    ]
+  }
+
+]

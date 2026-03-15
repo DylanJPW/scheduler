@@ -1,4 +1,60 @@
+import type { Lesson, TimeSlot } from "./types";
+import mockLessons from "../../mockData/lessons.json";
+import mockTimeSlots from "../../mockData/timeslots.json";
+import { getInstrumentTheme } from "./utils";
+import "./TimeTable.css";
+
+interface TimeSlotRowProps {
+  timeSlot: TimeSlot;
+  lessons: Lesson[];
+}
+
+const LessonCell = ({ teacher, instrument, students }: Lesson) => {
+  const theme = getInstrumentTheme(instrument);
+  return (
+    <td>
+      <div className={`border rounded-lg m-2 bg-${theme}-700`}>
+        <div className={`cell-header bg-${theme}-900`}>{instrument}</div>
+        <div>
+          <p>Teacher: {teacher.name}</p>
+          <p>Students: {students.length}</p>
+        </div>
+      </div>
+    </td>
+  );
+};
+
+const TimeSlotRow = ({ timeSlot, lessons }: TimeSlotRowProps) => {
+  const { startTime, endTime } = timeSlot;
+  return (
+    <tr>
+      <td>
+        {startTime} - {endTime}
+      </td>
+      {lessons.map((lesson) => (
+        <LessonCell {...lesson} />
+      ))}
+    </tr>
+  );
+};
+
 export const TimeTable = () => {
+  let maxLessons = 0;
+  const lessonsByStartTime = (mockLessons as Lesson[]).reduce(
+    (acc, lesson) => {
+      const key = lesson.timeSlot.startTime;
+
+      if (!acc[key]) acc[key] = [];
+
+      acc[key].push(lesson);
+
+      maxLessons = Math.max(maxLessons, acc[key].length);
+
+      return acc;
+    },
+    {} as Record<string, Lesson[]>,
+  );
+
   return (
     <div className="w-full border border-table-line rounded-lg">
       <table className="w-full">
@@ -8,41 +64,20 @@ export const TimeTable = () => {
         <thead className="border-b">
           <tr>
             <th>Time</th>
-            <th colSpan={2}>Classes</th>
+            <th colSpan={maxLessons} align="center">
+              Classes
+            </th>
           </tr>
         </thead>
 
         <tbody className="divide-y">
-          <tr>
-            <td>18:00</td>
-            <td>
-              <>
-                <div>John</div>
-                <div>Guitar</div>
-              </>
-            </td>
-            <td>
-              <>
-                <div>John</div>
-                <div>Guitar</div>
-              </>
-            </td>
-          </tr>
-          <tr>
-            <td>18:30</td>
-            <td>
-              <>
-                <div>John</div>
-                <div>Guitar</div>
-              </>
-            </td>
-            <td>
-              <>
-                <div>John</div>
-                <div>Guitar</div>
-              </>
-            </td>
-          </tr>
+          {mockTimeSlots.map((timeSlot) => (
+            <TimeSlotRow
+              key={timeSlot.startTime}
+              timeSlot={timeSlot}
+              lessons={lessonsByStartTime[timeSlot.startTime] ?? []}
+            />
+          ))}
         </tbody>
       </table>
     </div>

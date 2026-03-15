@@ -1,0 +1,147 @@
+[
+  {
+    "id": 1,
+    "instrument": "GUITAR",
+    "students": [
+      {
+        "name": "Fool 1",
+        "instrument": "GUITAR",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 1",
+        "instrument": "GUITAR",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 1",
+        "instrument": "GUITAR",
+        "skillLevel": "ADVANCED"
+      }
+    ],
+    "teacher": {
+      "name": "John",
+      "instruments": ["GUITAR"]
+    },
+    "timeSlot": {
+      "startTime": "18:00",
+      "endTime": "18:30"
+    }
+  },
+  {
+    "id": 2,
+    "instrument": "BANJO",
+    "students": [
+      {
+        "name": "Fool 2",
+        "instrument": "BANJO",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 2",
+        "instrument": "BANJO",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 2",
+        "instrument": "BANJO",
+        "skillLevel": "ADVANCED"
+      }
+    ],
+    "teacher": {
+      "name": "John",
+      "instruments": ["GUITAR"]
+    },
+    "timeSlot": {
+      "startTime": "18:00",
+      "endTime": "18:30"
+    }
+  },
+  {
+    "id": 3,
+    "instrument": "WHISTLE",
+    "students": [
+      {
+        "name": "Fool 3",
+        "instrument": "WHISTLE",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 3",
+        "instrument": "WHISTLE",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 3",
+        "instrument": "WHISTLE",
+        "skillLevel": "ADVANCED"
+      }
+    ],
+    "teacher": {
+      "name": "John",
+      "instruments": ["GUITAR"]
+    },
+    "timeSlot": {
+      "startTime": "18:00",
+      "endTime": "18:30"
+    }
+  },
+  {
+    "id": 4,
+    "instrument": "FLUTE",
+    "students": [
+      {
+        "name": "Fool 4",
+        "instrument": "FLUTE",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 4",
+        "instrument": "FLUTE",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 4",
+        "instrument": "FLUTE",
+        "skillLevel": "ADVANCED"
+      }
+    ],
+    "teacher": {
+      "name": "John",
+      "instruments": ["GUITAR"]
+    },
+    "timeSlot": {
+      "startTime": "18:00",
+      "endTime": "18:30"
+    }
+  },
+  {
+    "id": 5,
+    "instrument": "FIDDLE",
+    "students": [
+      {
+        "name": "Fool 5",
+        "instrument": "FIDDLE",
+        "skillLevel": "BEGINNER"
+      },
+      {
+        "name": "Joe 5",
+        "instrument": "FIDDLE",
+        "skillLevel": "INTERMEDIATE"
+      },
+      {
+        "name": "Tryhard 5",
+        "instrument": "FIDDLE",
+        "skillLevel": "ADVANCED"
+      }
+    ],
+    "teacher": {
+      "name": "John",
+      "instruments": ["GUITAR"]
+    },
+    "timeSlot": {
+      "startTime": "18:00",
+      "endTime": "18:30"
+    }
+  }
+]
