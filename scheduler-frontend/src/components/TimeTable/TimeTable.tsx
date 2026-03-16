@@ -1,7 +1,7 @@
 import type { Lesson, TimeSlot } from "./types";
+import { getTheme } from "../../utils";
 import mockLessons from "../../mockData/lessons.json";
 import mockTimeSlots from "../../mockData/timeslots.json";
-import { getInstrumentTheme } from "./utils";
 import "./TimeTable.css";
 
 interface TimeSlotRowProps {
@@ -10,11 +10,11 @@ interface TimeSlotRowProps {
 }
 
 const LessonCell = ({ teacher, instrument, students }: Lesson) => {
-  const theme = getInstrumentTheme(instrument);
+  const { base, light } = getTheme(instrument);
   return (
     <td>
-      <div className={`border rounded-lg m-2 bg-${theme}-700`}>
-        <div className={`cell-header bg-${theme}-900`}>{instrument}</div>
+      <div className={`border rounded-lg m-2 ${light}`}>
+        <div className={`cell-header rounded-t-lg ${base}`}>{instrument}</div>
         <div>
           <p>Teacher: {teacher.name}</p>
           <p>Students: {students.length}</p>
