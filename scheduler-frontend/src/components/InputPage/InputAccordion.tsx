@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type ColDef, type WithId } from "./types";
+import type { EntityId, ColDef, WithId } from "./types";
 import { getTheme } from "../../utils";
 import { useInputPage } from "./useInputPage";
 
@@ -15,11 +15,14 @@ export const InputAccordion = <T extends object & WithId>({
   colDefs,
 }: InputAccordion<T>) => {
   const { items, add, remove, edit } = useInputPage<T>(initialItems);
+  const { dark, base, light } = getTheme(label);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const id = `${label}-accordion`;
 
-  const { dark, base, light } = getTheme(label);
+  const [editableIds, setEditableIds] = useState<EntityId[]>([]);
+
+  function handleInputChange(value: string, item: T) {}
 
   return (
     <div className="w-full">
@@ -56,44 +59,72 @@ export const InputAccordion = <T extends object & WithId>({
           </thead>
 
           <tbody>
-            {items.map((item) => (
-              <tr className={light} key={item.id}>
-                {colDefs.map((col) => {
-                  const field = col.field as keyof T;
-                  const value = item[field];
-                  const displayValue = Array.isArray(value)
-                    ? value.join(", ")
-                    : String(value ?? "Placeholder");
+            {items.map((item) => {
+              const isEditable = editableIds.includes(item.id);
+              let currentItem = item;
+              return (
+                <tr className={light} key={item.id}>
+                  {colDefs.map((col) => {
+                    const field = col.field as keyof T;
+                    const value = item[field];
+                    const displayValue = Array.isArray(value)
+                      ? value.join(", ")
+                      : String(value ?? "Placeholder");
 
-                  return (
-                    <td
-                      key={`${item.id}-${String(field)}`}
-                      className="text-start px-4 py-2"
-                    >
-                      <input
-                        defaultValue={displayValue}
-                        onChange={(e) =>
-                          edit({
-                            ...item,
-                            [field]: Array.isArray(value)
-                              ? e.target.value.split(",").map((s) => s.trim())
-                              : e.target.value,
-                          })
+                    return (
+                      <td
+                        key={`${item.id}-${String(field)}`}
+                        className="text-start px-2 py-2"
+                      >
+                        <input
+                          defaultValue={displayValue}
+                          readOnly={!isEditable}
+                          className={`rounded-lg px-2 ${isEditable ? dark : ""} transition[background-color] duration-200`}
+                          onChange={(e) =>
+                            (currentItem = {
+                              ...currentItem,
+                              [field]: Array.isArray(value)
+                                ? e.target.value.split(",").map((s) => s.trim())
+                                : e.target.value,
+                            })
+                          }
+                        />
+                      </td>
+                    );
+                  })}
+                  <td>
+                    {isEditable ? (
+                      <button
+                        className="w-24 bg-slate-800 rounded-lg p-1 mx-4 hover:bg-slate-700 hover:cursor-pointer transition[background-color] duration-250"
+                        onClick={() => {
+                          setEditableIds((prev) =>
+                            prev.filter((x) => x !== item.id),
+                          );
+                          edit(currentItem);
+                        }}
+                      >
+                        Save
+                      </button>
+                    ) : (
+                      <button
+                        className="w-24 bg-slate-800 rounded-lg p-1 mx-4 hover:bg-slate-700 hover:cursor-pointer transition[background-color] duration-250"
+                        onClick={() =>
+                          setEditableIds((prev) => [...prev, item.id])
                         }
-                      />
-                    </td>
-                  );
-                })}
-                <td>
-                  <button
-                    onClick={() => remove(item.id)}
-                    className="w-24 bg-red-800 rounded-lg p-1 hover:bg-red-700 hover:cursor-pointer transition[background-color] duration-250"
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    <button
+                      onClick={() => remove(item.id)}
+                      className="w-24 bg-red-800 rounded-lg p-1 hover:bg-red-700 hover:cursor-pointer transition[background-color] duration-250"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
             <tr className={light}>
               <td colSpan={colDefs.length}></td>
               <td>
