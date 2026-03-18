@@ -51,9 +51,7 @@ export const InputAccordion = <T extends object & WithId>({
               <th
                 className={`sticky top-0 ${dark} text-start px-4 py-2`}
                 key={"Actions"}
-              >
-                Actions
-              </th>
+              ></th>
             </tr>
           </thead>
 
