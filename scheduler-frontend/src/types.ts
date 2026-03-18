@@ -50,3 +50,34 @@ export const THEMES: Record<string, ThemeScale> = {
     lighter: "bg-slate-500",
   },
 };
+
+export interface TimeSlot {
+  startTime: string;
+  endTime: string;
+}
+
+export interface Student {
+  id: number | string;
+  name: string;
+  instrument: string;
+  skillLevel: string;
+}
+
+export interface Teacher {
+  id: number | string;
+  name: string;
+  instruments: Instrument[];
+}
+
+export type StudentInput = Omit<Student, "id">;
+export type TeacherInput = Omit<Teacher, "id">;
+
+export interface Lesson {
+  id: number;
+  instrument: Instrument;
+  students: Student[];
+  teacher: Teacher;
+  timeSlot: TimeSlot;
+}
+
+export type Instrument = "BANJO" | "FIDDLE" | "FLUTE" | "GUITAR" | "WHISTLE";

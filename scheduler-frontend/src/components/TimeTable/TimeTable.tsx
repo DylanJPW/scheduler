@@ -1,4 +1,4 @@
-import type { Lesson, TimeSlot } from "./types";
+import type { Lesson, TimeSlot } from "../../types";
 import { getTheme } from "../../utils";
 import mockLessons from "../../mockData/lessons.json";
 import mockTimeSlots from "../../mockData/timeslots.json";

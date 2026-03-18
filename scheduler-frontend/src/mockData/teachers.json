@@ -1,50 +1,37 @@
 [
   {
+    "id": 1,
     "name": "John",
-    "instruments": [
-      "GUITAR"
-    ]
+    "instruments": ["GUITAR"]
   },
   {
+    "id": 2,
     "name": "Joe",
-    "instruments": [
-      "WHISTLE"
-    ]
+    "instruments": ["WHISTLE"]
   },
   {
+    "id": 3,
     "name": "John Joe",
-    "instruments": [
-      "BANJO",
-      "WHISTLE"
-    ]
+    "instruments": ["BANJO", "WHISTLE"]
   },
   {
+    "id": 4,
     "name": "Paul",
-    "instruments": [
-      "GUITAR",
-      "WHISTLE",
-      "FLUTE"
-    ]
+    "instruments": ["GUITAR", "WHISTLE", "FLUTE"]
   },
   {
+    "id": 5,
     "name": "John Paul",
-    "instruments": [
-      "FIDDLE"
-    ]
+    "instruments": ["FIDDLE"]
   },
   {
+    "id": 6,
     "name": "Jane",
-    "instruments": [
-      "WHISTLE",
-      "FLUTE"
-    ]
+    "instruments": ["WHISTLE", "FLUTE"]
   },
   {
+    "id": 7,
     "name": "Janette",
-    "instruments": [
-      "GUITAR",
-      "BANJO"
-    ]
+    "instruments": ["GUITAR", "BANJO"]
   }
-
 ]
