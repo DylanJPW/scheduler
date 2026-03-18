@@ -22,8 +22,6 @@ export const InputAccordion = <T extends object & WithId>({
 
   const [editableIds, setEditableIds] = useState<EntityId[]>([]);
 
-  function handleInputChange(value: string, item: T) {}
-
   return (
     <div className="w-full">
       <input
