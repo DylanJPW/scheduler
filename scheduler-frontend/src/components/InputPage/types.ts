@@ -1,8 +1,7 @@
-export const COL_NAMES = {
-  name: "Name",
-  instrument: "Instrument",
-  instruments: "Instruments",
-  skillLevel: "Skill Level",
-} as const;
+export type EntityId = number | string;
+export type WithId = { id: EntityId };
 
-export type COL_NAMES = (typeof COL_NAMES)[keyof typeof COL_NAMES];
+export type ColDef = {
+  name: string;
+  field: string;
+};
