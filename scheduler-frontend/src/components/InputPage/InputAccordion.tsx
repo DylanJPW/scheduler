@@ -95,7 +95,7 @@ export const InputAccordion = <T extends object & WithId>({
                   <td>
                     {isEditable ? (
                       <button
-                        className="w-24 bg-slate-800 rounded-lg p-1 mx-4 hover:bg-slate-700 hover:cursor-pointer transition[background-color] duration-250"
+                        className="w-24 bg-blue-800 rounded-lg p-1 mx-4 hover:bg-blue-700 hover:cursor-pointer transition[background-color] duration-250"
                         onClick={() => {
                           setEditableIds((prev) =>
                             prev.filter((x) => x !== item.id),
@@ -129,7 +129,7 @@ export const InputAccordion = <T extends object & WithId>({
               <td colSpan={colDefs.length}></td>
               <td>
                 <button
-                  className="w-24 bg-blue-800 rounded-lg p-1 hover:bg-blue-700 hover:cursor-pointer transition[background-color] duration-250"
+                  className="w-24 bg-blue-800 rounded-lg mb-2 p-1 hover:bg-blue-700 hover:cursor-pointer transition[background-color] duration-250"
                   onClick={() => add()}
                 >
                   Add
