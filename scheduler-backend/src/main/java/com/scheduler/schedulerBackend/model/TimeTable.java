@@ -1,12 +1,14 @@
 package com.scheduler.schedulerBackend.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.scheduler.schedulerBackend.utils.LocalTimeDeserialiser;
 import org.optaplanner.core.api.domain.solution.PlanningEntityCollectionProperty;
 import org.optaplanner.core.api.domain.solution.PlanningScore;
 import org.optaplanner.core.api.domain.solution.PlanningSolution;
 import org.optaplanner.core.api.domain.solution.ProblemFactCollectionProperty;
 import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -33,8 +35,14 @@ public class TimeTable {
     @PlanningScore
     private HardSoftScore score;
 
-    private LocalTime firstLessonStartTime;
-    private LocalTime lastLessonEndTime;
+    @JsonDeserialize(using = LocalTimeDeserialiser.class)
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime dayStart;
+
+    @JsonDeserialize(using = LocalTimeDeserialiser.class)
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime dayEnd;
+
     private int lengthOfLesson;
 
     public TimeTable() {
@@ -43,19 +51,19 @@ public class TimeTable {
     }
 
     public TimeTable(List<Teacher> teacherList, List<Student> studentList,
-                     LocalTime firstLessonStartTime, LocalTime lastLessonEndTime, int lengthOfLesson) {
+                     LocalTime dayStart, LocalTime dayEnd, int lengthOfLesson) {
         this.teacherList = teacherList;
         this.studentList = studentList;
-        this.firstLessonStartTime = firstLessonStartTime;
-        this.lastLessonEndTime = lastLessonEndTime;
+        this.dayStart = dayStart;
+        this.dayEnd = dayEnd;
         this.lengthOfLesson = lengthOfLesson;
-        this.timeSlotList = generateTimeSlots(firstLessonStartTime, lastLessonEndTime, lengthOfLesson);
+        this.timeSlotList = generateTimeSlots(dayStart, dayEnd, lengthOfLesson);
         this.lessonList = generateLessonsFromStudents(studentList);
     }
 
     public void generateSchedule() {
         if (this.timeSlotList == null || this.timeSlotList.isEmpty()) {
-            this.timeSlotList = generateTimeSlots(firstLessonStartTime, lastLessonEndTime, lengthOfLesson);
+            this.timeSlotList = generateTimeSlots(dayStart, dayEnd, lengthOfLesson);
         }
         if (this.lessonList == null || this.lessonList.isEmpty()) {
             this.lessonList = generateLessonsFromStudents(studentList);
@@ -124,19 +132,19 @@ public class TimeTable {
     }
 
     public LocalTime getFirstLessonStartTime() {
-        return firstLessonStartTime;
+        return dayStart;
     }
 
     public void setFirstLessonStartTime(LocalTime firstLessonStartTime) {
-        this.firstLessonStartTime = firstLessonStartTime;
+        this.dayStart = firstLessonStartTime;
     }
 
     public LocalTime getLastLessonEndTime() {
-        return lastLessonEndTime;
+        return dayEnd;
     }
 
     public void setLastLessonEndTime(LocalTime lastLessonEndTime) {
-        this.lastLessonEndTime = lastLessonEndTime;
+        this.dayEnd = lastLessonEndTime;
     }
 
     public int getLengthOfLesson() {
