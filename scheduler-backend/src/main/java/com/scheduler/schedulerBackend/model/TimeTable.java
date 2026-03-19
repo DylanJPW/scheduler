@@ -6,9 +6,12 @@ import org.optaplanner.core.api.domain.solution.PlanningSolution;
 import org.optaplanner.core.api.domain.solution.ProblemFactCollectionProperty;
 import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
+import org.springframework.cglib.core.Local;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @PlanningSolution
 public class TimeTable {
@@ -30,13 +33,58 @@ public class TimeTable {
     @PlanningScore
     private HardSoftScore score;
 
+    private LocalTime firstLessonStartTime;
+    private LocalTime lastLessonEndTime;
+    private int lengthOfLesson;
+
     public TimeTable() {
+        this.lessonList = new ArrayList<>();
+        this.timeSlotList = new ArrayList<>();
     }
 
-    public TimeTable(List<TimeSlot> timeSlotList, List<Teacher> teacherList) {
-        this.timeSlotList = timeSlotList;
+    public TimeTable(List<Teacher> teacherList, List<Student> studentList,
+                     LocalTime firstLessonStartTime, LocalTime lastLessonEndTime, int lengthOfLesson) {
         this.teacherList = teacherList;
-        this.lessonList = new ArrayList<>();
+        this.studentList = studentList;
+        this.firstLessonStartTime = firstLessonStartTime;
+        this.lastLessonEndTime = lastLessonEndTime;
+        this.lengthOfLesson = lengthOfLesson;
+        this.timeSlotList = generateTimeSlots(firstLessonStartTime, lastLessonEndTime, lengthOfLesson);
+        this.lessonList = generateLessonsFromStudents(studentList);
+    }
+
+    public void generateSchedule() {
+        if (this.timeSlotList == null || this.timeSlotList.isEmpty()) {
+            this.timeSlotList = generateTimeSlots(firstLessonStartTime, lastLessonEndTime, lengthOfLesson);
+        }
+        if (this.lessonList == null || this.lessonList.isEmpty()) {
+            this.lessonList = generateLessonsFromStudents(studentList);
+        }
+    }
+
+    private List<TimeSlot> generateTimeSlots(LocalTime start, LocalTime end, int lessonLength) {
+        List<TimeSlot> slots = new ArrayList<>();
+        LocalTime currentStart = start;
+
+        while (currentStart.plusMinutes(lessonLength).isBefore(end) || currentStart.plusMinutes(lessonLength).equals(end)) {
+            LocalTime currentEnd = currentStart.plusMinutes(lessonLength);
+            slots.add(new TimeSlot(currentStart, currentEnd));
+            currentStart = currentEnd;
+        }
+        return slots;
+    }
+
+    private List<Lesson> generateLessonsFromStudents(List<Student> students) {
+        return students.stream()
+                .collect(Collectors.groupingBy(Student::getInstrument))
+                .entrySet()
+                .stream()
+                .map(entry -> new Lesson(
+                        (long) entry.getValue().hashCode(),
+                        entry.getKey(),
+                        entry.getValue()
+                ))
+                .collect(Collectors.toList());
     }
 
     public List<TimeSlot> getTimeslotList() {
@@ -73,5 +121,29 @@ public class TimeTable {
 
     public HardSoftScore getScore() {
         return score;
+    }
+
+    public LocalTime getFirstLessonStartTime() {
+        return firstLessonStartTime;
+    }
+
+    public void setFirstLessonStartTime(LocalTime firstLessonStartTime) {
+        this.firstLessonStartTime = firstLessonStartTime;
+    }
+
+    public LocalTime getLastLessonEndTime() {
+        return lastLessonEndTime;
+    }
+
+    public void setLastLessonEndTime(LocalTime lastLessonEndTime) {
+        this.lastLessonEndTime = lastLessonEndTime;
+    }
+
+    public int getLengthOfLesson() {
+        return lengthOfLesson;
+    }
+
+    public void setLengthOfLesson(int lengthOfLesson) {
+        this.lengthOfLesson = lengthOfLesson;
     }
 }
