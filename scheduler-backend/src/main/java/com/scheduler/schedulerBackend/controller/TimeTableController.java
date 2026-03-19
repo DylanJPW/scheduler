@@ -1,5 +1,7 @@
 package com.scheduler.schedulerBackend.controller;
 
+import com.scheduler.schedulerBackend.model.Lesson;
+import com.scheduler.schedulerBackend.model.Student;
 import com.scheduler.schedulerBackend.model.TimeTable;
 import org.optaplanner.core.api.solver.SolverJob;
 import org.optaplanner.core.api.solver.SolverManager;
@@ -9,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/timeTable")
@@ -21,6 +25,9 @@ public class TimeTableController {
 
     @PostMapping("/solve")
     public TimeTable solve(@RequestBody TimeTable problem) {
+        List<Lesson> generatedLessons = generateLessonsFromStudents(problem.getStudentList());
+        problem.setLessonList(generatedLessons);
+
         UUID problemId = UUID.randomUUID();
         SolverJob<TimeTable, UUID> solverJob = solverManager.solve(problemId, problem);
         TimeTable solution;
@@ -30,5 +37,18 @@ public class TimeTableController {
             throw new IllegalStateException("Solving failed.", e);
         }
         return solution;
+    }
+
+    private List<Lesson> generateLessonsFromStudents(List<Student> students) {
+        return students.stream()
+                .collect(Collectors.groupingBy(Student::getInstrument))
+                .entrySet()
+                .stream()
+                .map(entry -> new Lesson(
+                        (long) entry.getValue().hashCode(),
+                        entry.getKey(),
+                        entry.getValue()
+                ))
+                .collect(Collectors.toList());
     }
 }

@@ -20,7 +20,7 @@ public class Lesson {
     private Teacher teacher;
 
     @PlanningVariable
-    private Timeslot timeslot;
+    private TimeSlot timeSlot;
 
     public Lesson() {
     }
@@ -59,18 +59,19 @@ public class Lesson {
         this.students = students;
     }
 
-    public Timeslot getTimeslot() {
-        return timeslot;
+    public TimeSlot getTimeslot() {
+        return timeSlot;
     }
 
-    public void setTimeslot(Timeslot timeslot) {
-        this.timeslot = timeslot;
+    public void setTimeslot(TimeSlot timeslot) {
+        this.timeSlot = timeslot;
     }
 
     @Override
     public String toString() {
         return "Lesson for " + instrument +
                 " taught by " + teacher +
-                " at " + timeslot;
+                " at " + timeSlot +
+                " with students: " + students;
     }
 }
