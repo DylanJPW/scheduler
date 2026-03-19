@@ -25,8 +25,7 @@ public class TimeTableController {
 
     @PostMapping("/solve")
     public TimeTable solve(@RequestBody TimeTable problem) {
-        List<Lesson> generatedLessons = generateLessonsFromStudents(problem.getStudentList());
-        problem.setLessonList(generatedLessons);
+        problem.generateSchedule();
 
         UUID problemId = UUID.randomUUID();
         SolverJob<TimeTable, UUID> solverJob = solverManager.solve(problemId, problem);
@@ -39,16 +38,5 @@ public class TimeTableController {
         return solution;
     }
 
-    private List<Lesson> generateLessonsFromStudents(List<Student> students) {
-        return students.stream()
-                .collect(Collectors.groupingBy(Student::getInstrument))
-                .entrySet()
-                .stream()
-                .map(entry -> new Lesson(
-                        (long) entry.getValue().hashCode(),
-                        entry.getKey(),
-                        entry.getValue()
-                ))
-                .collect(Collectors.toList());
-    }
+
 }
