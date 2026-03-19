@@ -2,11 +2,11 @@ package com.scheduler.schedulerBackend.model;
 
 import java.time.LocalTime;
 
-public class Timeslot {
+public class TimeSlot {
     private LocalTime startTime;
     private LocalTime endTime;
 
-    public Timeslot(LocalTime startTime, LocalTime endTime) {
+    public TimeSlot(LocalTime startTime, LocalTime endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
     }
