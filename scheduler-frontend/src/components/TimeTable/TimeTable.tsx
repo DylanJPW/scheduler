@@ -1,7 +1,6 @@
 import type { Lesson, TimeSlot } from "../../types";
 import { getTheme } from "../../utils";
-import mockLessons from "../../mockData/lessons.json";
-import mockTimeSlots from "../../mockData/timeslots.json";
+import type { TimeTableProps } from "./types";
 import "./TimeTable.css";
 
 interface TimeSlotRowProps {
@@ -38,9 +37,9 @@ const TimeSlotRow = ({ timeSlot, lessons }: TimeSlotRowProps) => {
   );
 };
 
-export const TimeTable = () => {
+export const TimeTable = ({ timeSlotList, lessonList }: TimeTableProps) => {
   let maxLessons = 0;
-  const lessonsByStartTime = (mockLessons as Lesson[]).reduce(
+  const lessonsByStartTime = lessonList.reduce(
     (acc, lesson) => {
       const key = lesson.timeSlot.startTime;
 
@@ -71,7 +70,7 @@ export const TimeTable = () => {
         </thead>
 
         <tbody className="divide-y">
-          {mockTimeSlots.map((timeSlot) => (
+          {timeSlotList.map((timeSlot) => (
             <TimeSlotRow
               key={timeSlot.startTime}
               timeSlot={timeSlot}
