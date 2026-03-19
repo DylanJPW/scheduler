@@ -20,7 +20,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
         // A teacher can only teach one lesson at a time
         return constraintFactory.forEach(Lesson.class)
                 .join(Lesson.class,
-                        Joiners.equal(Lesson::getTimeslot),
+                        Joiners.equal(Lesson::getTimeSlot),
                         Joiners.equal(Lesson::getTeacher),
                         Joiners.lessThan(Lesson::getId))
                 .penalize(HardSoftScore.ONE_HARD)
