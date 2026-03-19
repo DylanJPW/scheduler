@@ -1,26 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { EntityId, ColDef, WithId } from "./types";
 import { getTheme } from "../../utils";
-import { useInputPage } from "./useInputPage";
+import { useInputAccordion } from "./useInputAccordion";
 
 interface InputAccordion<T> {
   label: string;
   initialItems: T[];
   colDefs: ColDef[];
+  setPayloadItems: (value: T[]) => void;
 }
 
 export const InputAccordion = <T extends object & WithId>({
   label,
   initialItems,
   colDefs,
+  setPayloadItems,
 }: InputAccordion<T>) => {
-  const { items, add, remove, edit } = useInputPage<T>(initialItems);
+  const { items, add, remove, edit } = useInputAccordion<T>(initialItems);
   const { dark, base, light } = getTheme(label);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const id = `${label}-accordion`;
 
   const [editableIds, setEditableIds] = useState<EntityId[]>([]);
+
+  useEffect(() => {
+    setPayloadItems(items);
+  }, [items]);
 
   return (
     <div className="w-full">

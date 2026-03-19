@@ -95,7 +95,7 @@ public class TimeTable {
                 .collect(Collectors.toList());
     }
 
-    public List<TimeSlot> getTimeslotList() {
+    public List<TimeSlot> getTimeSlotList() {
         return timeSlotList;
     }
 

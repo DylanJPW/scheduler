@@ -1,31 +1,64 @@
 import { useState } from "react";
-import type { EntityId, WithId } from "./types";
+import axios from "axios";
+import type { Lesson, Student, Teacher, TimeSlot } from "../../types";
+import type { SolverPayload, TimeSlotParams } from "./types";
+import {
+  DEFAULT_DAY_END,
+  DEFAULT_DAY_START,
+  DEFAULT_LESSON_LENGTH,
+} from "../../constants";
+
+import mockStudents from "../../mockData/students.json";
+import mockTeachers from "../../mockData/teachers.json";
+import mockTimeSlots from "../../mockData/timeslots.json";
+import mockLessons from "../../mockData/lessons.json";
 
 const requestURL = "api/timeTable";
 
-export function useInputPage<T extends WithId>(initialItems: T[]) {
-  const [items, setItems] = useState<T[]>(initialItems);
+const defaultTimeSlotParams: TimeSlotParams = {
+  dayStart: DEFAULT_DAY_START,
+  dayEnd: DEFAULT_DAY_END,
+  lengthOfLesson: DEFAULT_LESSON_LENGTH,
+};
 
-  const add = () => {
-    const item = {
-      id: crypto.randomUUID(), // blank object with temp frontend id
-    } as T;
-    setItems((prev) => [...prev, item]);
-  };
+export function useInputPage() {
+  const [students, setStudents] = useState<Student[]>(mockStudents);
+  const [teachers, setTeachers] = useState<Teacher[]>(
+    mockTeachers as Teacher[],
+  );
+  const [timeSlotList, setTimeSlotList] = useState<TimeSlot[]>(mockTimeSlots);
+  const [lessonList, setLessonList] = useState<Lesson[]>(
+    mockLessons as Lesson[],
+  );
 
-  const remove = (id: EntityId) => {
-    setItems((prev) => prev.filter((x) => x.id !== id));
-    console.log("Test items:", items);
-  };
+  const [timeSlotParams, setTimeSlotParams] = useState<TimeSlotParams>(
+    defaultTimeSlotParams,
+  );
 
-  const edit = (newItem: T) => {
-    setItems((prev) => prev.map((x) => (newItem.id === x.id ? newItem : x)));
+  const solveTimeTable = async () => {
+    const payload: SolverPayload = {
+      studentList: students,
+      teacherList: teachers,
+      ...timeSlotParams,
+    };
+    await axios.post(requestURL + "/solve", payload).then((res) => {
+      const { lessonList: l, timeSlotList: t } = res.data;
+      setLessonList(l);
+      setTimeSlotList(t);
+    });
   };
 
   return {
-    items,
-    add,
-    remove,
-    edit,
+    students,
+    setStudents,
+    teachers,
+    setTeachers,
+    timeSlotParams,
+    setTimeSlotParams,
+    solveTimeTable,
+    timeSlotList,
+    setTimeSlotList,
+    lessonList,
+    setLessonList,
   };
 }

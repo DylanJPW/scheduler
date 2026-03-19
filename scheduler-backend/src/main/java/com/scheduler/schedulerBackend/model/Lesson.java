@@ -59,12 +59,12 @@ public class Lesson {
         this.students = students;
     }
 
-    public TimeSlot getTimeslot() {
+    public TimeSlot getTimeSlot() {
         return timeSlot;
     }
 
-    public void setTimeslot(TimeSlot timeslot) {
-        this.timeSlot = timeslot;
+    public void setTimeSlot(TimeSlot timeSlot) {
+        this.timeSlot = timeSlot;
     }
 
     @Override
