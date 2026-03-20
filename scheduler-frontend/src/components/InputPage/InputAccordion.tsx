@@ -43,7 +43,13 @@ export const InputAccordion = <T extends object & WithId>({
       >
         {label} ( {isOpen ? "Close" : "Expand"} )
       </label>
-      <div className="overflow-hidden h-fit max-h-0 rounded-b-lg peer-checked:max-h-75 peer-checked:overflow-auto transition-[max-height] duration-500 ease-in-out">
+      <div
+        className="overflow-hidden h-fit max-h-0 rounded-b-lg 
+        peer-checked:max-h-75 peer-checked:overflow-auto transition-[max-height] duration-500 ease-in-out 
+        [&::-webkit-scrollbar]:w-2
+      [&::-webkit-scrollbar-track]:bg-neutral-700 [&::-webkit-scrollbar-track]:rounded-lg
+      [&::-webkit-scrollbar-thumb]:bg-neutral-500 [&::-webkit-scrollbar-thumb]:rounded-lg"
+      >
         <table className="w-full">
           <thead>
             <tr>
