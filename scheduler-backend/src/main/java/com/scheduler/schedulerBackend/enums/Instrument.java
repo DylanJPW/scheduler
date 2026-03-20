@@ -6,4 +6,7 @@ public enum Instrument {
     WHISTLE,
     FLUTE,
     FIDDLE,
+    BODHRAN,
+    ACCORDION,
+    MANDOLIN,
 }
