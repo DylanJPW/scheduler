@@ -80,4 +80,15 @@ export interface Lesson {
   timeSlot: TimeSlot;
 }
 
-export type Instrument = "BANJO" | "FIDDLE" | "FLUTE" | "GUITAR" | "WHISTLE";
+export const Instrument = {
+  BANJO: "Banjo",
+  FIDDLE: "Fiddle",
+  FLUTE: "Flute",
+  GUITAR: "Guitar",
+  WHISTLE: "Whistle",
+  BODHRAN: "Bodhrán",
+  MANDOLIN: "Mandolin",
+  ACCORDION: "Accordion",
+};
+
+export type Instrument = keyof typeof Instrument;

@@ -3,8 +3,9 @@ import type { Student, Teacher } from "../../types";
 import { TimeSlotInput } from "./TimeSlotInput";
 import { useInputPage } from "./useInputPage";
 import { TimeTable } from "../TimeTable/TimeTable";
+import { type ColDef } from "./types";
 
-const studentColDefs = [
+const studentColDefs: ColDef[] = [
   {
     name: "Name",
     field: "name",
@@ -12,6 +13,7 @@ const studentColDefs = [
   {
     name: "Instrument",
     field: "instrument",
+    type: "select",
   },
   {
     name: "Skill Level",
@@ -19,7 +21,7 @@ const studentColDefs = [
   },
 ];
 
-const teacherColDefs = [
+const teacherColDefs: ColDef[] = [
   {
     name: "Name",
     field: "name",
@@ -27,6 +29,7 @@ const teacherColDefs = [
   {
     name: "Instruments",
     field: "instruments",
+    type: "multiSelect",
   },
 ];
 

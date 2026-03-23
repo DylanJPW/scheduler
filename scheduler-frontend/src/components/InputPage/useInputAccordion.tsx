@@ -17,6 +17,7 @@ export function useInputAccordion<T extends WithId>(initialItems: T[]) {
   };
 
   const edit = (newItem: T) => {
+    console.log("Test newItem:", newItem);
     setItems((prev) => prev.map((x) => (newItem.id === x.id ? newItem : x)));
   };
 
