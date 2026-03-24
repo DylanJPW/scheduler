@@ -18,13 +18,19 @@ interface InputAccordion<T> {
   setPayloadItems: (value: T[]) => void;
 }
 
-interface GetInputProps<T> {
-  value: string | Instrument[];
+interface RenderInputProps<T> {
+  value: string | string[];
   isEditable: boolean;
-  dark: string;
   item: T;
   field: keyof T;
   type?: InputType;
+}
+
+function getDisplayValue(value: string | Instrument[]) {
+  if (Array.isArray(value)) {
+    return value.map((v) => Instrument[v] ?? v).join(", ");
+  }
+  return Instrument[value as Instrument] ?? value;
 }
 
 export const InputAccordion = <T extends object & WithId>({
@@ -45,41 +51,43 @@ export const InputAccordion = <T extends object & WithId>({
     setPayloadItems(items);
   }, [items]);
 
-  const renderInput = (
-    item: T,
-    field: keyof T,
-    value: string | Instrument[],
-    isEditable: boolean,
-    type?: InputType,
-  ) => {
+  const renderInput = ({
+    item,
+    field,
+    value,
+    isEditable,
+    type,
+  }: RenderInputProps<T>) => {
     if (!isEditable) {
       return (
         <input
           readOnly={true}
-          value={Array.isArray(value) ? value.join(", ") : value}
+          value={getDisplayValue(value as string)}
           className={`rounded-lg px-2 ${isEditable ? dark : ""} transition[background-color] duration-200`}
         />
       );
     }
 
+    const options = Object.entries(Instrument).map(([key, label]) => ({
+      label,
+      value: key,
+    }));
     if (type === InputSelectType.select) {
-      const defaultValue = Instrument[value as Instrument] ?? value;
       return (
         <Select
-          options={Object.values(Instrument)}
-          defaultSelected={[defaultValue]}
+          options={options}
+          value={[value as string]}
           onChange={(val) => edit({ ...item, [field]: val })}
         />
       );
     }
 
     if (type === InputSelectType.multiSelect) {
+      console.log("Test value:", value);
       return (
         <Select
-          options={Object.values(Instrument)}
-          defaultSelected={(value as Instrument[]).map(
-            (instrument) => Instrument[instrument],
-          )}
+          options={options}
+          value={value as string[]}
           isMulti
           onChange={(val) => edit({ ...item, [field]: val })}
         />
@@ -146,15 +154,16 @@ export const InputAccordion = <T extends object & WithId>({
               return (
                 <tr className={light} key={item.id}>
                   {colDefs.map((col) => {
+                    const type = col.type;
                     const field = col.field as keyof T;
-                    const value = item[field] as string | Instrument[];
+                    const value = item[field] as string | string[];
 
                     return (
                       <td
                         key={`${item.id}-${String(field)}`}
                         className="text-start px-2 py-2"
                       >
-                        {renderInput(item, field, value, isEditable, col.type)}
+                        {renderInput({ item, field, value, isEditable, type })}
                       </td>
                     );
                   })}

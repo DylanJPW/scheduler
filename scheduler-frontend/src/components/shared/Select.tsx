@@ -1,43 +1,44 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+interface SelectOption {
+  label: string;
+  value: string;
+}
 
 interface SelectProps {
-  options: string[];
-  defaultSelected: string | string[];
+  options: SelectOption[];
+  value: string[];
   onChange: (value: string | string[]) => void;
   isMulti?: boolean;
 }
 
 export const Select = ({
   options,
-  defaultSelected,
+  value,
   onChange,
   isMulti = false,
 }: SelectProps) => {
-  const [selected, setSelected] = useState<string | string[]>(defaultSelected);
   const [open, setOpen] = useState(false);
 
   const toggleOption = (option: string) => {
     if (isMulti) {
-      setSelected((prev) =>
-        (prev as string[]).includes(option)
-          ? (prev as string[]).filter((o) => o !== option)
-          : [...prev, option],
-      );
+      if (value.includes(option)) {
+        onChange(value.filter((v) => v !== option));
+      } else {
+        onChange([...value, option]);
+      }
     } else {
-      setSelected([option]);
+      onChange(option);
     }
   };
 
-  useEffect(() => {
-    onChange(selected);
-  }, [selected]);
-
-  let displayValue = "";
-  if (!selected.length) {
-    displayValue = "Select options";
-  } else {
-    displayValue = Array.isArray(selected) ? selected.join(", ") : selected;
-  }
+  const displayValue =
+    value?.length === 0
+      ? "Select options"
+      : options
+          .filter((opt) => value.includes(opt.value))
+          .map((opt) => opt.label)
+          .join(", ");
 
   return (
     <>
@@ -54,17 +55,19 @@ export const Select = ({
             className="h-screen w-screen bg-black opacity-0 block fixed z-40 top-0 left-0"
             onClick={() => setOpen(false)}
           ></div>
-          <div className="absolute border mt-1 bg-slate-700 rounded shadow z-50">
-            {options.map((opt) => (
-              <label key={opt} className="flex items-center gap-2 p-2">
-                <input
-                  type="checkbox"
-                  checked={selected.includes(opt)}
-                  onChange={() => toggleOption(opt)}
-                />
-                {opt}
-              </label>
-            ))}
+          <div className=" border mt-1 bg-slate-700 rounded shadow z-50">
+            {options.map((opt) => {
+              return (
+                <label key={opt.value} className="flex items-center gap-2 p-2">
+                  <input
+                    type="checkbox"
+                    checked={value.includes(opt.value)}
+                    onChange={() => toggleOption(opt.value)}
+                  />
+                  {opt.label}
+                </label>
+              );
+            })}
           </div>
         </>
       )}

@@ -13,11 +13,9 @@ export function useInputAccordion<T extends WithId>(initialItems: T[]) {
 
   const remove = (id: EntityId) => {
     setItems((prev) => prev.filter((x) => x.id !== id));
-    console.log("Test items:", items);
   };
 
   const edit = (newItem: T) => {
-    console.log("Test newItem:", newItem);
     setItems((prev) => prev.map((x) => (newItem.id === x.id ? newItem : x)));
   };
 
