@@ -63,7 +63,7 @@ export const InputAccordion = <T extends object & WithId>({
         <input
           readOnly={true}
           value={getDisplayValue(value as string)}
-          className={`rounded-lg px-2 ${isEditable ? dark : ""} transition[background-color] duration-200`}
+          className={`rounded-lg px-2 py-0.5 ${isEditable ? dark : ""} transition[background-color] duration-200`}
         />
       );
     }
@@ -83,7 +83,6 @@ export const InputAccordion = <T extends object & WithId>({
     }
 
     if (type === InputSelectType.multiSelect) {
-      console.log("Test value:", value);
       return (
         <Select
           options={options}

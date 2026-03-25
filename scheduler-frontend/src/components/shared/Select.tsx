@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface SelectOption {
   label: string;
@@ -19,6 +20,38 @@ export const Select = ({
   isMulti = false,
 }: SelectProps) => {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0, width: 0 });
+
+  const handleScroll = () => {
+    if (!triggerRef.current) return;
+
+    const rect = triggerRef.current.getBoundingClientRect();
+
+    setMenuPos({
+      top: rect.bottom,
+      left: rect.left,
+      width: rect.width,
+    });
+  };
+
+  useEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+    if (open) {
+      window.addEventListener("scroll", handleScroll, true);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [open]);
 
   const toggleOption = (option: string) => {
     if (isMulti) {
@@ -40,25 +73,40 @@ export const Select = ({
           .map((opt) => opt.label)
           .join(", ");
 
+  const upArrow = <>&#9206;</>;
+  const downArrow = <>&#9207;</>;
+
   return (
     <>
       <div
-        className="border p-2 rounded cursor-pointer"
+        ref={triggerRef}
+        className="border-2 px-1 rounded cursor-pointer flex justify-between"
         onClick={() => setOpen(!open)}
       >
-        {displayValue}
+        <p>{displayValue}</p>
+        <p>{open ? upArrow : downArrow}</p>
       </div>
 
-      {open && (
-        <>
-          <div
-            className="h-screen w-screen bg-black opacity-0 block fixed z-40 top-0 left-0"
-            onClick={() => setOpen(false)}
-          ></div>
-          <div className=" border mt-1 bg-slate-700 rounded shadow z-50">
-            {options.map((opt) => {
-              return (
-                <label key={opt.value} className="flex items-center gap-2 p-2">
+      {open &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setOpen(false)}
+            />
+            <div
+              className="fixed z-50 bg-slate-700 border rounded shadow"
+              style={{
+                top: menuPos.top,
+                left: menuPos.left,
+                width: menuPos.width,
+              }}
+            >
+              {options.map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 p-2 cursor-pointer hover:bg-slate-600"
+                >
                   <input
                     type="checkbox"
                     checked={value.includes(opt.value)}
@@ -66,11 +114,11 @@ export const Select = ({
                   />
                   {opt.label}
                 </label>
-              );
-            })}
-          </div>
-        </>
-      )}
+              ))}
+            </div>
+          </>,
+          document.body,
+        )}
     </>
   );
 };
