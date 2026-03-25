@@ -2,6 +2,7 @@ package com.scheduler.schedulerBackend.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.scheduler.schedulerBackend.enums.Instrument;
 import com.scheduler.schedulerBackend.utils.LocalTimeDeserialiser;
 import org.optaplanner.core.api.domain.solution.PlanningEntityCollectionProperty;
 import org.optaplanner.core.api.domain.solution.PlanningScore;
@@ -13,24 +14,29 @@ import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @PlanningSolution
 public class TimeTable {
 
-    @ValueRangeProvider
+    @ValueRangeProvider(id = "timeSlotRange")
     @ProblemFactCollectionProperty
     private List<TimeSlot> timeSlotList;
 
-    @ValueRangeProvider
+    @ValueRangeProvider(id = "teacherRange")
     @ProblemFactCollectionProperty
     private List<Teacher> teacherList;
 
     @ProblemFactCollectionProperty
     private List<Student> studentList;
 
+    @ValueRangeProvider(id = "lessonRange")
     @PlanningEntityCollectionProperty
     private List<Lesson> lessonList;
+
+    @PlanningEntityCollectionProperty
+    private List<StudentAssignment> studentAssignmentList;
 
     @PlanningScore
     private HardSoftScore score;
@@ -48,17 +54,23 @@ public class TimeTable {
     public TimeTable() {
         this.lessonList = new ArrayList<>();
         this.timeSlotList = new ArrayList<>();
+        this.studentAssignmentList = new ArrayList<>();
     }
 
-    public TimeTable(List<Teacher> teacherList, List<Student> studentList,
-                     LocalTime dayStart, LocalTime dayEnd, int lengthOfLesson) {
+    public TimeTable(List<Teacher> teacherList,
+                     List<Student> studentList,
+                     LocalTime dayStart,
+                     LocalTime dayEnd,
+                     int lengthOfLesson) {
+
         this.teacherList = teacherList;
         this.studentList = studentList;
         this.dayStart = dayStart;
         this.dayEnd = dayEnd;
         this.lengthOfLesson = lengthOfLesson;
         this.timeSlotList = generateTimeSlots(dayStart, dayEnd, lengthOfLesson);
-        this.lessonList = generateLessonsFromStudents(studentList);
+        this.lessonList = generateLessons(studentList);
+        this.studentAssignmentList = generateStudentAssignments(studentList);
     }
 
     public void generateSchedule() {
@@ -66,8 +78,43 @@ public class TimeTable {
             this.timeSlotList = generateTimeSlots(dayStart, dayEnd, lengthOfLesson);
         }
         if (this.lessonList == null || this.lessonList.isEmpty()) {
-            this.lessonList = generateLessonsFromStudents(studentList);
+            this.lessonList = generateLessons(studentList);
         }
+        if (this.studentAssignmentList == null || this.studentAssignmentList.isEmpty()) {
+            this.studentAssignmentList = generateStudentAssignments(studentList);
+        }
+    }
+
+    private List<Lesson> generateLessons(List<Student> students) {
+        Map<Instrument, List<Student>> byInstrument =
+                students.stream().collect(Collectors.groupingBy(Student::getInstrument));
+
+        List<Lesson> lessons = new ArrayList<>();
+        long id = 0;
+
+        for (var entry : byInstrument.entrySet()) {
+            Instrument instrument = entry.getKey();
+            int studentCount = entry.getValue().size();
+
+            int lessonCount = (int) Math.ceil(studentCount / 6.0);
+
+            for (int i = 0; i < lessonCount; i++) {
+                lessons.add(new Lesson(id++, instrument));
+            }
+        }
+
+        return lessons;
+    }
+
+    private List<StudentAssignment> generateStudentAssignments(List<Student> students) {
+        List<StudentAssignment> assignments = new ArrayList<>();
+
+        long id = 0;
+        for (Student student : students) {
+            assignments.add(new StudentAssignment(id++, student));
+        }
+
+        return assignments;
     }
 
     private List<TimeSlot> generateTimeSlots(LocalTime start, LocalTime end, int lessonLength) {
@@ -80,19 +127,6 @@ public class TimeTable {
             currentStart = currentEnd;
         }
         return slots;
-    }
-
-    private List<Lesson> generateLessonsFromStudents(List<Student> students) {
-        return students.stream()
-                .collect(Collectors.groupingBy(Student::getInstrument))
-                .entrySet()
-                .stream()
-                .map(entry -> new Lesson(
-                        (long) entry.getValue().hashCode(),
-                        entry.getKey(),
-                        entry.getValue()
-                ))
-                .collect(Collectors.toList());
     }
 
     public List<TimeSlot> getTimeSlotList() {
@@ -109,6 +143,14 @@ public class TimeTable {
 
     public void setLessonList(List<Lesson> lessonList) {
         this.lessonList = lessonList;
+    }
+
+    public List<StudentAssignment> getStudentAssignmentList() {
+        return studentAssignmentList;
+    }
+
+    public void setStudentAssignmentList(List<StudentAssignment> studentAssignmentList) {
+        this.studentAssignmentList = studentAssignmentList;
     }
 
     public List<Teacher> getTeacherList() {
