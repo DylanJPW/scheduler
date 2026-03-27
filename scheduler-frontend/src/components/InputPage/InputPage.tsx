@@ -1,9 +1,15 @@
 import { InputAccordion } from "./InputAccordion";
-import type { Student, Teacher } from "../../types";
+import {
+  Instrument,
+  SkillLevel,
+  type Student,
+  type Teacher,
+} from "../../types";
 import { TimeSlotInput } from "./TimeSlotInput";
 import { useInputPage } from "./useInputPage";
 import { TimeTable } from "../TimeTable/TimeTable";
 import { type ColDef } from "./types";
+import { mapDictToKeyValue } from "../shared/utils";
 
 const studentColDefs: ColDef[] = [
   {
@@ -14,10 +20,13 @@ const studentColDefs: ColDef[] = [
     name: "Instrument",
     field: "instrument",
     type: "select",
+    options: mapDictToKeyValue(Instrument),
   },
   {
     name: "Skill Level",
     field: "skillLevel",
+    type: "select",
+    options: mapDictToKeyValue(SkillLevel),
   },
 ];
 
@@ -30,6 +39,7 @@ const teacherColDefs: ColDef[] = [
     name: "Instruments",
     field: "instruments",
     type: "multiSelect",
+    options: mapDictToKeyValue(Instrument),
   },
 ];
 

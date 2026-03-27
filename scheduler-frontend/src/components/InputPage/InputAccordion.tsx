@@ -5,10 +5,10 @@ import {
   type WithId,
   type InputType,
   InputSelectType,
+  type KeyValue,
 } from "./types";
 import { getTheme } from "../../utils";
 import { useInputAccordion } from "./useInputAccordion";
-import { Instrument } from "../../types";
 import { Select } from "../shared/Select";
 
 interface InputAccordion<T> {
@@ -24,13 +24,16 @@ interface RenderInputProps<T> {
   item: T;
   field: keyof T;
   type?: InputType;
+  options?: KeyValue[];
 }
 
-function getDisplayValue(value: string | Instrument[]) {
+function getDisplayValue(value: string | string[], options: KeyValue[] = []) {
   if (Array.isArray(value)) {
-    return value.map((v) => Instrument[v] ?? v).join(", ");
+    return value
+      .map((v) => options.find((o) => o.key === v)?.value ?? v)
+      .join(", ");
   }
-  return Instrument[value as Instrument] ?? value;
+  return options.find((o) => o.key === value)?.value ?? value;
 }
 
 export const InputAccordion = <T extends object & WithId>({
@@ -57,22 +60,19 @@ export const InputAccordion = <T extends object & WithId>({
     value,
     isEditable,
     type,
+    options,
   }: RenderInputProps<T>) => {
     if (!isEditable) {
       return (
         <input
           readOnly={true}
-          value={getDisplayValue(value as string)}
+          value={getDisplayValue(value as string, options)}
           className={`rounded-lg px-2 py-0.5 ${isEditable ? dark : ""} transition[background-color] duration-200`}
         />
       );
     }
 
-    const options = Object.entries(Instrument).map(([key, label]) => ({
-      label,
-      value: key,
-    }));
-    if (type === InputSelectType.select) {
+    if (type === InputSelectType.select && options) {
       return (
         <Select
           options={options}
@@ -82,7 +82,7 @@ export const InputAccordion = <T extends object & WithId>({
       );
     }
 
-    if (type === InputSelectType.multiSelect) {
+    if (type === InputSelectType.multiSelect && options) {
       return (
         <Select
           options={options}
@@ -153,7 +153,7 @@ export const InputAccordion = <T extends object & WithId>({
               return (
                 <tr className={light} key={item.id}>
                   {colDefs.map((col) => {
-                    const type = col.type;
+                    const { type, options } = col;
                     const field = col.field as keyof T;
                     const value = item[field] as string | string[];
 
@@ -162,7 +162,14 @@ export const InputAccordion = <T extends object & WithId>({
                         key={`${item.id}-${String(field)}`}
                         className="text-start px-2 py-2"
                       >
-                        {renderInput({ item, field, value, isEditable, type })}
+                        {renderInput({
+                          item,
+                          field,
+                          value,
+                          isEditable,
+                          type,
+                          options,
+                        })}
                       </td>
                     );
                   })}

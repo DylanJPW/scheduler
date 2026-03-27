@@ -92,3 +92,11 @@ export const Instrument = {
 };
 
 export type Instrument = keyof typeof Instrument;
+
+export const SkillLevel = {
+  BEGINNER: "Beginner",
+  INTERMEDIATE: "Intermediate",
+  ADVANCED: "Advanced",
+};
+
+export type SkillLevel = keyof typeof SkillLevel;
