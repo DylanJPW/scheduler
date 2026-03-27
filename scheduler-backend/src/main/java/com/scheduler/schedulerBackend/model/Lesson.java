@@ -5,8 +5,6 @@ import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
 
-import java.util.List;
-
 @PlanningEntity
 public class Lesson {
 
@@ -14,21 +12,19 @@ public class Lesson {
     private Long id;
 
     private Instrument instrument;
-    private List<Student> students;
 
-    @PlanningVariable
-    private Teacher teacher;
-
-    @PlanningVariable
+    @PlanningVariable(valueRangeProviderRefs = "timeSlotRange")
     private TimeSlot timeSlot;
+
+    @PlanningVariable(valueRangeProviderRefs = "teacherRange")
+    private Teacher teacher;
 
     public Lesson() {
     }
 
-    public Lesson(Long id, Instrument instrument, List<Student> students) {
+    public Lesson(Long id, Instrument instrument) {
         this.id = id;
         this.instrument = instrument;
-        this.students = students;
     }
 
     public Long getId() {
@@ -51,14 +47,6 @@ public class Lesson {
         this.teacher = teacher;
     }
 
-    public List<Student> getStudents() {
-        return students;
-    }
-
-    public void setStudents(List<Student> students) {
-        this.students = students;
-    }
-
     public TimeSlot getTimeSlot() {
         return timeSlot;
     }
@@ -71,7 +59,6 @@ public class Lesson {
     public String toString() {
         return "Lesson for " + instrument +
                 " taught by " + teacher +
-                " at " + timeSlot +
-                " with students: " + students;
+                " at " + timeSlot;
     }
 }
