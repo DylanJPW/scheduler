@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
-interface SelectOption {
-  label: string;
-  value: string;
-}
+import type { KeyValue } from "../InputPage/types";
 
 interface SelectProps {
-  options: SelectOption[];
+  options: KeyValue[];
   value: string[];
   onChange: (value: string | string[]) => void;
   isMulti?: boolean;
@@ -69,8 +65,8 @@ export const Select = ({
     value?.length === 0
       ? "Select options"
       : options
-          .filter((opt) => value.includes(opt.value))
-          .map((opt) => opt.label)
+          .filter((opt) => value.includes(opt.key))
+          .map((opt) => opt.value)
           .join(", ");
 
   const upArrow = <>&#9206;</>;
@@ -104,15 +100,15 @@ export const Select = ({
             >
               {options.map((opt) => (
                 <label
-                  key={opt.value}
+                  key={opt.key}
                   className="flex items-center gap-2 p-2 cursor-pointer hover:bg-slate-600"
                 >
                   <input
                     type="checkbox"
-                    checked={value.includes(opt.value)}
-                    onChange={() => toggleOption(opt.value)}
+                    checked={value.includes(opt.key)}
+                    onChange={() => toggleOption(opt.key)}
                   />
-                  {opt.label}
+                  {opt.value}
                 </label>
               ))}
             </div>

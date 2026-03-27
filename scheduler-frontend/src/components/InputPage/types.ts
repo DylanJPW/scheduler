@@ -9,10 +9,15 @@ export const InputSelectType = {
 };
 export type InputType = "text" | keyof typeof InputSelectType;
 
+export type KeyValue = {
+  [key: string]: string;
+};
+
 export type ColDef = {
   name: string;
   field: string;
   type?: InputType;
+  options?: KeyValue[];
 };
 
 export interface TimeSlotParams {
