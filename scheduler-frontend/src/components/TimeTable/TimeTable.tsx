@@ -15,8 +15,8 @@ const LessonCell = ({ teacher, instrument, students }: Lesson) => {
       <div className={`border rounded-lg m-2 ${light}`}>
         <div className={`cell-header rounded-t-lg ${base}`}>{instrument}</div>
         <div>
-          <p>Teacher: {teacher.name}</p>
-          <p>Students: {students.length}</p>
+          <p>Teacher: {teacher?.name}</p>
+          <p>Students: {students?.length}</p>
         </div>
       </div>
     </td>

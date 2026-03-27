@@ -203,7 +203,10 @@ export const InputAccordion = <T extends object & WithId>({
               <td>
                 <button
                   className="w-24 bg-blue-800 rounded-lg mb-2 p-1 hover:bg-blue-700 hover:cursor-pointer transition[background-color] duration-250"
-                  onClick={() => add()}
+                  onClick={() => {
+                    const newItem = add();
+                    setEditableIds((prev) => [...prev, newItem.id]);
+                  }}
                 >
                   Add
                 </button>
