@@ -5,6 +5,8 @@ import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
 
+import java.time.Duration;
+
 @PlanningEntity
 public class Lesson {
 
@@ -53,6 +55,10 @@ public class Lesson {
 
     public void setTimeSlot(TimeSlot timeSlot) {
         this.timeSlot = timeSlot;
+    }
+
+    public long getDuration() {
+        return Duration.between(timeSlot.getStartTime(), timeSlot.getEndTime()).toMinutes();
     }
 
     @Override

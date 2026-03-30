@@ -12,6 +12,11 @@ public class Teacher extends Person {
         this.instruments = instruments;
     }
 
+    public Teacher(String name, TimeSlot preferredTimeRange, List<Instrument> instruments) {
+        super(name, preferredTimeRange);
+        this.instruments = instruments;
+    }
+
     public List<Instrument> getInstruments() {
         return instruments;
     }

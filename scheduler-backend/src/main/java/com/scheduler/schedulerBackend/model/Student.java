@@ -3,12 +3,20 @@ package com.scheduler.schedulerBackend.model;
 import com.scheduler.schedulerBackend.enums.Instrument;
 import com.scheduler.schedulerBackend.enums.SkillLevel;
 
+import java.sql.Time;
+
 public class Student extends Person {
     private Instrument instrument;
     private SkillLevel skillLevel;
 
     public Student(String name, Instrument instrument, SkillLevel skillLevel) {
         super(name);
+        this.instrument = instrument;
+        this.skillLevel = skillLevel;
+    }
+
+    public Student(String name, TimeSlot preferredTimeRange, Instrument instrument, SkillLevel skillLevel) {
+        super(name, preferredTimeRange);
         this.instrument = instrument;
         this.skillLevel = skillLevel;
     }
