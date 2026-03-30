@@ -3,23 +3,14 @@ package com.scheduler.schedulerBackend.model;
 import com.scheduler.schedulerBackend.enums.Instrument;
 import com.scheduler.schedulerBackend.enums.SkillLevel;
 
-public class Student {
-    private String name;
+public class Student extends Person {
     private Instrument instrument;
     private SkillLevel skillLevel;
 
     public Student(String name, Instrument instrument, SkillLevel skillLevel) {
-        this.name = name;
+        super(name);
         this.instrument = instrument;
         this.skillLevel = skillLevel;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Instrument getInstrument() {
