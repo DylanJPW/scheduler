@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import {
+  InputType,
   type EntityId,
   type ColDef,
   type WithId,
-  type InputType,
-  InputSelectType,
   type KeyValue,
 } from "./types";
 import { getTheme } from "../../utils";
@@ -67,12 +66,12 @@ export const InputAccordion = <T extends object & WithId>({
         <input
           readOnly={true}
           value={getDisplayValue(value as string, options)}
-          className={`rounded-lg px-2 py-0.5 ${isEditable ? dark : ""} transition[background-color] duration-200`}
+          className="rounded-lg px-2 py-0.5 transition[background-color] duration-200"
         />
       );
     }
 
-    if (type === InputSelectType.select && options) {
+    if (type === InputType.select && options) {
       return (
         <Select
           options={options}
@@ -82,7 +81,7 @@ export const InputAccordion = <T extends object & WithId>({
       );
     }
 
-    if (type === InputSelectType.multiSelect && options) {
+    if (type === InputType.multiSelect && options) {
       return (
         <Select
           options={options}
@@ -90,6 +89,16 @@ export const InputAccordion = <T extends object & WithId>({
           isMulti
           onChange={(val) => edit({ ...item, [field]: val })}
         />
+      );
+    }
+
+    if (type === InputType.timeRange) {
+      return (
+        <div className="flex flex-row">
+          <input className={`rounded-lg px-2 py-0.5 ${dark}`} type="time" />
+          <p className="px-2">—</p>
+          <input className={`rounded-lg px-2 py-0.5 ${dark}`} type="time" />
+        </div>
       );
     }
 

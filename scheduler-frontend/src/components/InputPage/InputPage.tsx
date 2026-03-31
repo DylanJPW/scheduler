@@ -28,6 +28,11 @@ const studentColDefs: ColDef[] = [
     type: "select",
     options: mapDictToKeyValue(SkillLevel),
   },
+  {
+    name: "Preferred Time",
+    field: "preferredTimeRange",
+    type: "timeRange",
+  },
 ];
 
 const teacherColDefs: ColDef[] = [
@@ -40,6 +45,11 @@ const teacherColDefs: ColDef[] = [
     field: "instruments",
     type: "multiSelect",
     options: mapDictToKeyValue(Instrument),
+  },
+  {
+    name: "Preferred Time",
+    field: "preferredTimeRange",
+    type: "timeRange",
   },
 ];
 
