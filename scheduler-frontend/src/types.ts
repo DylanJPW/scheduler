@@ -56,16 +56,18 @@ export interface TimeSlot {
   endTime: string;
 }
 
-export interface Student {
+interface Person {
   id: number | string;
   name: string;
+  preferredTimeRange: TimeSlot;
+}
+
+export interface Student extends Person {
   instrument: string;
   skillLevel: string;
 }
 
-export interface Teacher {
-  id: number | string;
-  name: string;
+export interface Teacher extends Person {
   instruments: Instrument[];
 }
 

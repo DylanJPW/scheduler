@@ -3,7 +3,11 @@
     "id": 1,
     "name": "Fool 1",
     "instrument": "GUITAR",
-    "skillLevel": "BEGINNER"
+    "skillLevel": "BEGINNER",
+    "preferredTimeRange": {
+      "startTime": "18:30",
+      "endTime": "19:00"
+    }
   },
   {
     "id": 2,
