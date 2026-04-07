@@ -104,19 +104,37 @@ export const InputAccordion = <T extends object & WithId>({
       );
     }
 
-    if (type === InputType.timeRange) {
+    if (type === InputType.timeRange && field === "preferredTimeRange") {
       return (
         <div className="flex flex-row">
           <input
             className={`rounded-lg px-2 py-0.5 ${dark}`}
             type="time"
             value={(value as TimeSlot)?.startTime}
+            onChange={(e) =>
+              edit({
+                ...item,
+                preferredTimeRange: {
+                  ...(value as TimeSlot),
+                  startTime: e.target.value,
+                },
+              })
+            }
           />
           <p className="px-2">—</p>
           <input
             className={`rounded-lg px-2 py-0.5 ${dark}`}
             type="time"
             value={(value as TimeSlot)?.endTime}
+            onChange={(e) =>
+              edit({
+                ...item,
+                preferredTimeRange: {
+                  ...(value as TimeSlot),
+                  endTime: e.target.value,
+                },
+              })
+            }
           />
         </div>
       );
