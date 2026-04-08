@@ -4,6 +4,9 @@ public abstract class Person {
     protected String name;
     protected TimeSlot preferredTimeRange;
 
+    public Person() {
+    }
+
     public Person(String name) {
         this.name = name;
     }

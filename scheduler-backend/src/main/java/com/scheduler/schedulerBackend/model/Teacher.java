@@ -7,6 +7,9 @@ import java.util.List;
 public class Teacher extends Person {
     private List<Instrument> instruments;
 
+    public Teacher() {
+    }
+
     public Teacher(String name, List<Instrument> instruments) {
         super(name);
         this.instruments = instruments;

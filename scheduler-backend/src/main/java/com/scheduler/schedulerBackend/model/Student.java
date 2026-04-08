@@ -9,6 +9,9 @@ public class Student extends Person {
     private Instrument instrument;
     private SkillLevel skillLevel;
 
+    public Student() {
+    }
+
     public Student(String name, Instrument instrument, SkillLevel skillLevel) {
         super(name);
         this.instrument = instrument;

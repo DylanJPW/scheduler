@@ -69,13 +69,15 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
     private Constraint studentDoesNotPreferTime(ConstraintFactory factory) {
         return factory.forEach(StudentAssignment.class)
                 .filter(sa -> {
+                    if (sa.getStudent().getPreferredTimeRange() == null || sa.getLesson().getTimeSlot() == null) {return false;}
+
                     LocalTime lessonStart = sa.getLesson().getTimeSlot().getStartTime();
                     LocalTime prefStart = sa.getStudent().getPreferredTimeRange().getStartTime();
                     LocalTime prefEnd = sa.getStudent().getPreferredTimeRange().getEndTime();
 
                     return lessonStart.isBefore(prefStart) || lessonStart.isAfter(prefEnd);
                 })
-                .impact(HardSoftScore.ONE_SOFT,
+                .penalize(HardSoftScore.ONE_SOFT,
                         sa -> {
                             LocalTime lessonStart = sa.getLesson().getTimeSlot().getStartTime();
                             LocalTime prefStart = sa.getStudent().getPreferredTimeRange().getStartTime();
@@ -101,7 +103,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
 
                     return lessonStart.isBefore(prefStart) || lessonStart.isAfter(prefEnd);
                 })
-                .impact(HardSoftScore.ONE_SOFT,
+                .penalize(HardSoftScore.ONE_SOFT,
                         lesson -> {
                             LocalTime lessonStart = lesson.getTimeSlot().getStartTime();
                             LocalTime prefStart = lesson.getTeacher().getPreferredTimeRange().getStartTime();
