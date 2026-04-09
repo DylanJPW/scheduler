@@ -19,6 +19,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
 
                 // Soft constraints
                 studentDoesNotPreferTime(constraintFactory),
+                teacherDoesNotPreferTime(constraintFactory),
         };
     }
 
@@ -97,6 +98,8 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
     private Constraint teacherDoesNotPreferTime(ConstraintFactory factory) {
         return factory.forEach(Lesson.class)
                 .filter(lesson -> {
+                    if (lesson.getTeacher().getPreferredTimeRange() == null || lesson.getTimeSlot() == null) {return false;}
+
                     LocalTime lessonStart = lesson.getTimeSlot().getStartTime();
                     LocalTime prefStart = lesson.getTeacher().getPreferredTimeRange().getStartTime();
                     LocalTime prefEnd = lesson.getTeacher().getPreferredTimeRange().getEndTime();
