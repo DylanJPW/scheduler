@@ -59,7 +59,7 @@ export interface TimeSlot {
 interface Person {
   id: number | string;
   name: string;
-  preferredTimeRange: TimeSlot;
+  preferredTimeRange?: TimeSlot;
 }
 
 export interface Student extends Person {
@@ -102,3 +102,16 @@ export const SkillLevel = {
 };
 
 export type SkillLevel = keyof typeof SkillLevel;
+
+export interface SolveResponse {
+  lessonList: Lesson[];
+  timeSlotList: TimeSlot[];
+  score: string;
+  feasible: boolean;
+  hardScore: number;
+  softScore: number;
+  unusedMinutes: number;
+  emptyClassCount: number;
+  minStudentsPerClass: number;
+  maxStudentsPerClass: number;
+}

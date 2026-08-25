@@ -3,8 +3,6 @@ package com.scheduler.schedulerBackend.model;
 import com.scheduler.schedulerBackend.enums.Instrument;
 import com.scheduler.schedulerBackend.enums.SkillLevel;
 
-import java.sql.Time;
-
 public class Student extends Person {
     private Instrument instrument;
     private SkillLevel skillLevel;
@@ -42,6 +40,6 @@ public class Student extends Person {
 
     @Override
     public String toString() {
-        return name + " is learning how to play the " + instrument + " at " + skillLevel + " level ";
+        return name + " (" + skillLevel + " " + instrument + ")";
     }
 }

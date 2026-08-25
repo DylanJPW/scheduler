@@ -1,5 +1,6 @@
 package com.scheduler.schedulerBackend.model;
 
+import com.scheduler.schedulerBackend.config.SchedulingRules;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 import org.optaplanner.core.api.score.stream.*;
 
@@ -7,23 +8,30 @@ import java.time.Duration;
 import java.time.LocalTime;
 
 public class TimeTableConstraintProvider implements ConstraintProvider {
+
+    private static final int SMALL_CLASS_PENALTY = 100;
+
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
         return new Constraint[] {
-                // Hard constraints
+                // Hard constraints - these must never be broken
                 teacherConflict(constraintFactory),
                 teacherLacksInstrument(constraintFactory),
-                minStudentsPerLesson(constraintFactory),
                 maxStudentsPerLesson(constraintFactory),
                 studentHasWrongInstrument(constraintFactory),
 
-                // Soft constraints
+                // Soft constraints - these should be avoided, but a schedule that breaks
+                // them is still a usable schedule
+                classTooSmall(constraintFactory),
+                emptyClass(constraintFactory),
                 studentDoesNotPreferTime(constraintFactory),
                 teacherDoesNotPreferTime(constraintFactory),
         };
     }
 
-    private Constraint teacherConflict(ConstraintFactory constraintFactory) {
+    // ---------------------------------------------------------------- hard
+
+    Constraint teacherConflict(ConstraintFactory constraintFactory) {
         // A teacher can only teach one lesson at a time
         return constraintFactory.forEach(Lesson.class)
                 .join(Lesson.class,
@@ -34,92 +42,103 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Teacher Conflict");
     }
 
-    private Constraint teacherLacksInstrument(ConstraintFactory constraintFactory) {
+    Constraint teacherLacksInstrument(ConstraintFactory constraintFactory) {
         // A teacher can only teach what they can play
         return constraintFactory.forEach(Lesson.class)
-                .filter(lesson -> !lesson.getTeacher().getInstruments().contains(lesson.getInstrument()))
+                .filter(lesson -> lesson.getTeacher().getInstruments() == null
+                        || !lesson.getTeacher().getInstruments().contains(lesson.getInstrument()))
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Teacher Lacks Instrument");
     }
 
-    private Constraint minStudentsPerLesson(ConstraintFactory factory) {
+    Constraint maxStudentsPerLesson(ConstraintFactory factory) {
         return factory.forEach(StudentAssignment.class)
                 .groupBy(StudentAssignment::getLesson, ConstraintCollectors.count())
-                .filter((lesson, count) -> count < 2)
+                .filter((lesson, count) -> count > SchedulingRules.MAX_STUDENTS_PER_CLASS)
                 .penalize(HardSoftScore.ONE_HARD,
-                        (lesson, count) -> 2 - count)
-                .asConstraint("Min Students Per Lesson");
-    }
-
-    private Constraint maxStudentsPerLesson(ConstraintFactory factory) {
-        return factory.forEach(StudentAssignment.class)
-                .groupBy(StudentAssignment::getLesson, ConstraintCollectors.count())
-                .filter((lesson, count) -> count > 6)
-                .penalize(HardSoftScore.ONE_HARD,
-                        (lesson, count) -> count - 6)
+                        (lesson, count) -> count - SchedulingRules.MAX_STUDENTS_PER_CLASS)
                 .asConstraint("Max Students Per Lesson");
     }
 
-    private Constraint studentHasWrongInstrument(ConstraintFactory factory) {
+    Constraint studentHasWrongInstrument(ConstraintFactory factory) {
         return factory.forEach(StudentAssignment.class)
                 .filter(sa -> sa.getStudent().getInstrument() != sa.getLesson().getInstrument())
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Student Has Wrong Instrument");
     }
 
-    private Constraint studentDoesNotPreferTime(ConstraintFactory factory) {
+    // ---------------------------------------------------------------- soft
+
+    Constraint classTooSmall(ConstraintFactory factory) {
         return factory.forEach(StudentAssignment.class)
-                .filter(sa -> {
-                    if (sa.getStudent().getPreferredTimeRange() == null || sa.getLesson().getTimeSlot() == null) {return false;}
+                .groupBy(StudentAssignment::getLesson, ConstraintCollectors.count())
+                .filter((lesson, count) -> count < SchedulingRules.MIN_STUDENTS_PER_CLASS)
+                .penalize(HardSoftScore.ofSoft(SMALL_CLASS_PENALTY),
+                        (lesson, count) -> SchedulingRules.MIN_STUDENTS_PER_CLASS - count)
+                .asConstraint("Class Too Small");
+    }
 
-                    LocalTime lessonStart = sa.getLesson().getTimeSlot().getStartTime();
-                    LocalTime prefStart = sa.getStudent().getPreferredTimeRange().getStartTime();
-                    LocalTime prefEnd = sa.getStudent().getPreferredTimeRange().getEndTime();
+    Constraint emptyClass(ConstraintFactory factory) {
+        return factory.forEach(Lesson.class)
+                .ifNotExists(StudentAssignment.class,
+                        Joiners.equal(lesson -> lesson, StudentAssignment::getLesson))
+                .penalize(HardSoftScore.ofSoft(
+                        SMALL_CLASS_PENALTY * SchedulingRules.MIN_STUDENTS_PER_CLASS))
+                .asConstraint("Empty Class");
+    }
 
-                    return lessonStart.isBefore(prefStart) || lessonStart.isAfter(prefEnd);
-                })
+    Constraint studentDoesNotPreferTime(ConstraintFactory factory) {
+        return factory.forEach(StudentAssignment.class)
+                .filter(sa -> isOutsidePreference(
+                        lessonStartOf(sa), sa.getStudent().getPreferredTimeRange()))
                 .penalize(HardSoftScore.ONE_SOFT,
-                        sa -> {
-                            LocalTime lessonStart = sa.getLesson().getTimeSlot().getStartTime();
-                            LocalTime prefStart = sa.getStudent().getPreferredTimeRange().getStartTime();
-                            LocalTime prefEnd = sa.getStudent().getPreferredTimeRange().getEndTime();
-
-                            long lessonLength = sa.getLesson().getDuration();
-                            long minutesDiff = lessonStart.isBefore(prefStart)
-                                    ? Duration.between(lessonStart, prefStart).toMinutes()
-                                    : Duration.between(prefEnd, lessonStart).toMinutes();
-
-                            return (int) (minutesDiff / lessonLength);
-                        }
-                )
+                        sa -> slotsOutsidePreference(
+                                lessonStartOf(sa),
+                                sa.getStudent().getPreferredTimeRange(),
+                                sa.getLesson().getDuration()))
                 .asConstraint("Student Does Not Prefer Time");
     }
 
-    private Constraint teacherDoesNotPreferTime(ConstraintFactory factory) {
+    Constraint teacherDoesNotPreferTime(ConstraintFactory factory) {
         return factory.forEach(Lesson.class)
-                .filter(lesson -> {
-                    if (lesson.getTeacher().getPreferredTimeRange() == null || lesson.getTimeSlot() == null) {return false;}
-
-                    LocalTime lessonStart = lesson.getTimeSlot().getStartTime();
-                    LocalTime prefStart = lesson.getTeacher().getPreferredTimeRange().getStartTime();
-                    LocalTime prefEnd = lesson.getTeacher().getPreferredTimeRange().getEndTime();
-
-                    return lessonStart.isBefore(prefStart) || lessonStart.isAfter(prefEnd);
-                })
+                .filter(lesson -> isOutsidePreference(
+                        lessonStartOf(lesson), lesson.getTeacher().getPreferredTimeRange()))
                 .penalize(HardSoftScore.ONE_SOFT,
-                        lesson -> {
-                            LocalTime lessonStart = lesson.getTimeSlot().getStartTime();
-                            LocalTime prefStart = lesson.getTeacher().getPreferredTimeRange().getStartTime();
-                            LocalTime prefEnd = lesson.getTeacher().getPreferredTimeRange().getEndTime();
-
-                            long lessonLength = lesson.getDuration();
-                            long minutesDiff = lessonStart.isBefore(prefStart)
-                                    ? Duration.between(lessonStart, prefStart).toMinutes()
-                                    : Duration.between(prefEnd, lessonStart).toMinutes();
-
-                            return (int) (minutesDiff / lessonLength);
-                        }
-                )
+                        lesson -> slotsOutsidePreference(
+                                lessonStartOf(lesson),
+                                lesson.getTeacher().getPreferredTimeRange(),
+                                lesson.getDuration()))
                 .asConstraint("Teacher Does Not Prefer Time");
+    }
+
+    // ------------------------------------------------------- shared helpers
+
+    private static LocalTime lessonStartOf(StudentAssignment sa) {
+        Lesson lesson = sa.getLesson();
+        return (lesson == null || lesson.getTimeSlot() == null)
+                ? null
+                : lesson.getTimeSlot().getStartTime();
+    }
+
+    private static LocalTime lessonStartOf(Lesson lesson) {
+        return lesson.getTimeSlot() == null ? null : lesson.getTimeSlot().getStartTime();
+    }
+
+    private static boolean isOutsidePreference(LocalTime lessonStart, TimeSlot preference) {
+        if (lessonStart == null || preference == null
+                || preference.getStartTime() == null || preference.getEndTime() == null) {
+            return false; // no preference expressed, or nothing scheduled yet: nothing to penalise
+        }
+        return lessonStart.isBefore(preference.getStartTime())
+                || lessonStart.isAfter(preference.getEndTime());
+    }
+
+    private static int slotsOutsidePreference(LocalTime lessonStart, TimeSlot preference,
+                                              long lessonLengthMinutes) {
+        long safeLength = Math.max(1, lessonLengthMinutes);
+        long minutesOut = lessonStart.isBefore(preference.getStartTime())
+                ? Duration.between(lessonStart, preference.getStartTime()).toMinutes()
+                : Duration.between(preference.getEndTime(), lessonStart).toMinutes();
+        return (int) Math.max(1, minutesOut / safeLength);
     }
 }

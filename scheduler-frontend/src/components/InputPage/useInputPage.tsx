@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import type { Lesson, Student, Teacher, TimeSlot } from "../../types";
+import type { Lesson, SolveResponse, Student, Teacher, TimeSlot } from "../../types";
 import type { SolverPayload, TimeSlotParams } from "./types";
 import {
   DEFAULT_DAY_END,
@@ -21,6 +21,18 @@ const defaultTimeSlotParams: TimeSlotParams = {
   lengthOfLesson: DEFAULT_LESSON_LENGTH,
 };
 
+function describeError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const body = error.response?.data as { message?: string } | undefined;
+    if (body?.message) return body.message;
+    if (!error.response) {
+      return "Could not reach the server. Is the backend running on port 8080?";
+    }
+    return `${error.response.status}: ${error.message}`;
+  }
+  return error instanceof Error ? error.message : "Something went wrong.";
+}
+
 export function useInputPage() {
   const [students, setStudents] = useState<Student[]>(mockStudents);
   const [teachers, setTeachers] = useState<Teacher[]>(
@@ -35,17 +47,32 @@ export function useInputPage() {
     defaultTimeSlotParams,
   );
 
+  const [isSolving, setIsSolving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<SolveResponse | null>(null);
+
   const solveTimeTable = async () => {
-    const payload: SolverPayload = {
-      studentList: students,
-      teacherList: teachers,
-      ...timeSlotParams,
-    };
-    await axios.post(requestURL + "/solve", payload).then((res) => {
-      const { lessonList: l, timeSlotList: t } = res.data;
-      setLessonList(l);
-      setTimeSlotList(t);
-    });
+    setIsSolving(true);
+    setError(null);
+    try {
+      const payload: SolverPayload = {
+        studentList: students,
+        teacherList: teachers,
+        ...timeSlotParams,
+      };
+      const { data } = await axios.post<SolveResponse>(
+        `${requestURL}/solve`,
+        payload,
+      );
+      setResult(data);
+      setLessonList(data.lessonList);
+      setTimeSlotList(data.timeSlotList);
+    } catch (e) {
+      setError(describeError(e));
+      setResult(null);
+    } finally {
+      setIsSolving(false);
+    }
   };
 
   return {
@@ -60,5 +87,8 @@ export function useInputPage() {
     setTimeSlotList,
     lessonList,
     setLessonList,
+    isSolving,
+    error,
+    result,
   };
 }

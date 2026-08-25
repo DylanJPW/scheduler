@@ -12,10 +12,7 @@ import { type ColDef } from "./types";
 import { mapDictToKeyValue } from "../shared/utils";
 
 const studentColDefs: ColDef[] = [
-  {
-    name: "Name",
-    field: "name",
-  },
+  { name: "Name", field: "name" },
   {
     name: "Instrument",
     field: "instrument",
@@ -28,29 +25,18 @@ const studentColDefs: ColDef[] = [
     type: "select",
     options: mapDictToKeyValue(SkillLevel),
   },
-  {
-    name: "Preferred Time",
-    field: "preferredTimeRange",
-    type: "timeRange",
-  },
+  { name: "Preferred Time", field: "preferredTimeRange", type: "timeRange" },
 ];
 
 const teacherColDefs: ColDef[] = [
-  {
-    name: "Name",
-    field: "name",
-  },
+  { name: "Name", field: "name" },
   {
     name: "Instruments",
     field: "instruments",
     type: "multiSelect",
     options: mapDictToKeyValue(Instrument),
   },
-  {
-    name: "Preferred Time",
-    field: "preferredTimeRange",
-    type: "timeRange",
-  },
+  { name: "Preferred Time", field: "preferredTimeRange", type: "timeRange" },
 ];
 
 export const InputPage = () => {
@@ -64,7 +50,11 @@ export const InputPage = () => {
     solveTimeTable,
     timeSlotList,
     lessonList,
+    isSolving,
+    error,
+    result,
   } = useInputPage();
+
   return (
     <div className="flex flex-col gap-4 w-full">
       <TimeSlotInput
@@ -83,14 +73,27 @@ export const InputPage = () => {
         colDefs={teacherColDefs}
         setPayloadItems={setTeachers}
       />
-      <button
-        className="bg-blue-800 rounded-lg p-2 w-16 self-end hover:cursor-pointer hover:bg-blue-700 transition[background-color] duration-250"
-        onClick={() => solveTimeTable()}
-      >
-        Solve
-      </button>
 
-      <TimeTable timeSlotList={timeSlotList} lessonList={lessonList} />
+      <div className="flex flex-row items-center justify-end gap-4">
+        {error && (
+          <p className="text-red-300 text-sm text-right" role="alert">
+            {error}
+          </p>
+        )}
+        <button
+          className="bg-blue-800 rounded-lg p-2 min-w-24 hover:cursor-pointer hover:bg-blue-700 transition-[background-color] duration-250 disabled:bg-slate-600 disabled:cursor-not-allowed"
+          onClick={() => void solveTimeTable()}
+          disabled={isSolving}
+        >
+          {isSolving ? "Solving…" : "Solve"}
+        </button>
+      </div>
+
+      <TimeTable
+        timeSlotList={timeSlotList}
+        lessonList={lessonList}
+        result={result}
+      />
     </div>
   );
 };

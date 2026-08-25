@@ -3,6 +3,7 @@ package com.scheduler.schedulerBackend.model;
 import com.scheduler.schedulerBackend.enums.Instrument;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Teacher extends Person {
     private List<Instrument> instruments;
@@ -30,6 +31,11 @@ public class Teacher extends Person {
 
     @Override
     public String toString() {
-        return name + " teaches:\n" + instruments.stream().map(((instrument) -> instrument + "\n" ));
+        if (instruments == null || instruments.isEmpty()) {
+            return name + " (teaches nothing)";
+        }
+        return name + " (" + instruments.stream()
+                .map(Instrument::name)
+                .collect(Collectors.joining(", ")) + ")";
     }
 }

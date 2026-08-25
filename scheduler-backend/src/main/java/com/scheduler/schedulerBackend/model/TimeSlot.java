@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.scheduler.schedulerBackend.utils.LocalTimeDeserialiser;
 
 import java.time.LocalTime;
+import java.util.Objects;
 
 public class TimeSlot {
     @JsonDeserialize(using = LocalTimeDeserialiser.class)
@@ -40,7 +41,24 @@ public class TimeSlot {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof TimeSlot other)) {
+            return false;
+        }
+        return Objects.equals(startTime, other.startTime)
+                && Objects.equals(endTime, other.endTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startTime, endTime);
+    }
+
+    @Override
     public String toString() {
-        return startTime.toString();
+        return startTime + "-" + endTime;
     }
 }
