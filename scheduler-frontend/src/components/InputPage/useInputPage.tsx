@@ -11,7 +11,6 @@ import {
 import mockStudents from "../../mockData/students.json";
 import mockTeachers from "../../mockData/teachers.json";
 import mockTimeSlots from "../../mockData/timeslots.json";
-import mockLessons from "../../mockData/lessons.json";
 
 const requestURL = "api/timeTable";
 
@@ -39,9 +38,7 @@ export function useInputPage() {
     mockTeachers as Teacher[],
   );
   const [timeSlotList, setTimeSlotList] = useState<TimeSlot[]>(mockTimeSlots);
-  const [lessonList, setLessonList] = useState<Lesson[]>(
-    mockLessons as Lesson[],
-  );
+  const [lessonList, setLessonList] = useState<Lesson[]>([] as Lesson[]);
 
   const [timeSlotParams, setTimeSlotParams] = useState<TimeSlotParams>(
     defaultTimeSlotParams,
