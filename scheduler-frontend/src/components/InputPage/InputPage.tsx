@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { InputAccordion } from "./InputAccordion";
 import {
   Instrument,
@@ -7,10 +8,11 @@ import {
 } from "../../types";
 import { TimeSlotInput } from "./TimeSlotInput";
 import { useInputPage } from "./useInputPage";
-import { TimeTable } from "../TimeTable/TimeTable";
-import { Families } from "../TimeTable/Families";
-import { type ColDef } from "./types";
+import { SolvePanel } from "./SolvePanel";
+import { ScheduleViews } from "../TimeTable/ScheduleViews";
+import type { ColDef, Highlight } from "./types";
 import { mapDictToKeyValue } from "../shared/utils";
+import type { Problem } from "../../validation";
 
 const studentColDefs: ColDef[] = [
   { name: "Name", field: "name" },
@@ -26,8 +28,13 @@ const studentColDefs: ColDef[] = [
     type: "select",
     options: mapDictToKeyValue(SkillLevel),
   },
-  { name: "Family", field: "familyId" },
-  { name: "Preferred Time", field: "preferredTimeRange", type: "timeRange" },
+  { name: "Family", field: "familyId", type: "family" },
+  {
+    name: "Preferred Time",
+    field: "preferredTimeRange",
+    type: "timeRange",
+    sortable: false,
+  },
 ];
 
 const teacherColDefs: ColDef[] = [
@@ -38,8 +45,26 @@ const teacherColDefs: ColDef[] = [
     type: "multiSelect",
     options: mapDictToKeyValue(Instrument),
   },
-  { name: "Preferred Time", field: "preferredTimeRange", type: "timeRange" },
+  {
+    name: "Preferred Time",
+    field: "preferredTimeRange",
+    type: "timeRange",
+    sortable: false,
+  },
 ];
+
+const newStudent = (): Student => ({
+  id: crypto.randomUUID(),
+  name: "",
+  instrument: "",
+  skillLevel: "",
+});
+
+const newTeacher = (): Teacher => ({
+  id: crypto.randomUUID(),
+  name: "",
+  instruments: [],
+});
 
 export const InputPage = () => {
   const {
@@ -50,54 +75,111 @@ export const InputPage = () => {
     timeSlotParams,
     setTimeSlotParams,
     solveTimeTable,
+    resetToSample,
+    restoredFromSave,
     timeSlotList,
     lessonList,
     isSolving,
+    elapsedMs,
     error,
     result,
+    problems,
   } = useInputPage();
 
-  return (
-    <div className="flex flex-col gap-4 w-full">
-      <TimeSlotInput
-        timeSlotParams={timeSlotParams}
-        setTimeSlotParams={setTimeSlotParams}
-      />
-      <InputAccordion<Student>
-        label="Students"
-        initialItems={students}
-        colDefs={studentColDefs}
-        setPayloadItems={setStudents}
-      />
-      <InputAccordion<Teacher>
-        label="Teachers"
-        initialItems={teachers}
-        colDefs={teacherColDefs}
-        setPayloadItems={setTeachers}
-      />
+  const [highlight, setHighlight] = useState<Highlight | null>(null);
 
-      <div className="flex flex-row items-center justify-end gap-4">
-        {error && (
-          <p className="text-red-300 text-sm text-right" role="alert">
-            {error}
-          </p>
-        )}
-        <button
-          className="bg-blue-800 rounded-lg p-2 min-w-24 hover:cursor-pointer hover:bg-blue-700 transition-[background-color] duration-250 disabled:bg-slate-600 disabled:cursor-not-allowed"
-          onClick={() => void solveTimeTable()}
-          disabled={isSolving}
-        >
-          {isSolving ? "Solving…" : "Solve"}
-        </button>
+  const familyIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const student of students) {
+      const familyId = student.familyId?.trim().toLowerCase();
+      if (familyId) ids.add(familyId);
+    }
+    return [...ids].sort();
+  }, [students]);
+
+  const showMe = (problem: Problem) => {
+    if (!problem.list || !problem.entityIds) return;
+    setHighlight({
+      list: problem.list,
+      entityIds: problem.entityIds,
+      note: problem.message,
+      nonce: Date.now(),
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-6 w-full">
+      <header className="text-left print:hidden">
+        <h1 className="text-3xl font-semibold">Class scheduler</h1>
+        <p className="opacity-80 pt-1">
+          Set the evening, list the students and teachers, then solve. Your work
+          is saved in this browser as you type.
+          {restoredFromSave && " Picked up where you left off."}{" "}
+          <button
+            type="button"
+            className="underline cursor-pointer"
+            onClick={() => {
+              if (
+                window.confirm(
+                  "Replace everything with the sample data? Your current lists will be lost.",
+                )
+              ) {
+                resetToSample();
+              }
+            }}
+          >
+            Start again from the sample data
+          </button>
+        </p>
+      </header>
+
+      <div className="print:hidden flex flex-col gap-4">
+        <TimeSlotInput
+          timeSlotParams={timeSlotParams}
+          setTimeSlotParams={setTimeSlotParams}
+        />
+
+        <InputAccordion<Student>
+          label="Students"
+          step="2."
+          listKey="students"
+          items={students}
+          colDefs={studentColDefs}
+          onChange={setStudents}
+          makeBlank={newStudent}
+          familyIds={familyIds}
+          highlight={highlight}
+        />
+
+        <InputAccordion<Teacher>
+          label="Teachers"
+          step="3."
+          listKey="teachers"
+          items={teachers}
+          colDefs={teacherColDefs}
+          onChange={setTeachers}
+          makeBlank={newTeacher}
+          highlight={highlight}
+        />
+
+        <SolvePanel
+          problems={problems}
+          onShowMe={showMe}
+          onSolve={() => void solveTimeTable()}
+          isSolving={isSolving}
+          elapsedMs={elapsedMs}
+          error={error}
+        />
       </div>
 
-      <TimeTable
+      <ScheduleViews
         timeSlotList={timeSlotList}
         lessonList={lessonList}
+        students={students}
+        teachers={teachers}
         result={result}
       />
 
-      <Families timeSlotList={timeSlotList} lessonList={lessonList} />
     </div>
   );
 };

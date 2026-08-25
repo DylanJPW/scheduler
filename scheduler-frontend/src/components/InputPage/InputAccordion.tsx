@@ -1,139 +1,255 @@
-import { useEffect, useState } from "react";
-import {
+import { useEffect, useMemo, useRef, useState } from "react";
+import type {
+  ColDef,
+  EntityId,
+  Highlight,
   InputType,
-  type EntityId,
-  type ColDef,
-  type WithId,
-  type KeyValue,
+  KeyValue,
+  WithId,
 } from "./types";
 import { getTheme } from "../../utils";
-import { useInputAccordion } from "./useInputAccordion";
 import { Select } from "../shared/Select";
 import type { TimeSlot } from "../../types";
 
-interface InputAccordion<T> {
+interface InputAccordionProps<T extends WithId> {
   label: string;
-  initialItems: T[];
+  step?: string;
+  listKey: "students" | "teachers";
+  items: T[];
   colDefs: ColDef[];
-  setPayloadItems: (value: T[]) => void;
+  onChange: (items: T[]) => void;
+  makeBlank: () => T;
+  familyIds?: string[];
+  highlight?: Highlight | null;
 }
 
-type DisplayValueType = string | string[] | TimeSlot;
-
-interface RenderInputProps<T> {
-  value: DisplayValueType;
-  isEditable: boolean;
+interface UndoState<T> {
   item: T;
-  field: keyof T;
-  type?: InputType;
-  options?: KeyValue[];
+  index: number;
+  description: string;
 }
 
-function getDisplayValue(
-  value: DisplayValueType,
-  type: InputType = "text",
-  options: KeyValue[] = [],
-) {
-  if (type === InputType.multiSelect) {
-    return (value as string[])
-      .map((v) => options.find((o) => o.key === v)?.value ?? v)
-      .join(", ");
+const UNDO_MS = 10_000;
+
+function optionLabel(options: KeyValue[] | undefined, key: string): string {
+  return options?.find((o) => o.key === key)?.value ?? key;
+}
+
+function searchText<T extends WithId>(item: T, colDefs: ColDef[]): string {
+  const parts: string[] = [];
+  for (const col of colDefs) {
+    const raw = (item as Record<string, unknown>)[col.field];
+    if (raw == null) continue;
+
+    if (col.type === "multiSelect" && Array.isArray(raw)) {
+      parts.push(raw.map((key: string) => optionLabel(col.options, key)).join(" "));
+    } else if (col.type === "select" && typeof raw === "string") {
+      parts.push(optionLabel(col.options, raw));
+    } else if (col.type === "timeRange") {
+      const range = raw as TimeSlot;
+      if (range?.startTime) parts.push(`${range.startTime} ${range.endTime}`);
+    } else if (typeof raw === "string") {
+      parts.push(raw);
+    }
   }
-  if (type === InputType.timeRange) {
-    return (value as TimeSlot)?.startTime && (value as TimeSlot)?.endTime
-      ? `${(value as TimeSlot)?.startTime} — ${(value as TimeSlot)?.endTime}`
-      : "No preference";
+  return parts.join(" ").toLowerCase();
+}
+
+function sortValue<T extends WithId>(item: T, col: ColDef): string {
+  const raw = (item as Record<string, unknown>)[col.field];
+  if (raw == null) return "";
+  if (col.type === "multiSelect" && Array.isArray(raw)) {
+    return raw.map((key: string) => optionLabel(col.options, key)).join(", ");
   }
-  return options.find((o) => o.key === value)?.value ?? value;
+  if (col.type === "select" && typeof raw === "string") {
+    return optionLabel(col.options, raw);
+  }
+  if (col.type === "timeRange") return (raw as TimeSlot)?.startTime ?? "";
+  return typeof raw === "string" ? raw : String(raw);
 }
 
 export const InputAccordion = <T extends object & WithId>({
   label,
-  initialItems,
+  step,
+  listKey,
+  items,
   colDefs,
-  setPayloadItems,
-}: InputAccordion<T>) => {
-  const { items, add, remove, edit } = useInputAccordion<T>(initialItems);
+  onChange,
+  makeBlank,
+  familyIds = [],
+  highlight = null,
+}: InputAccordionProps<T>) => {
   const { dark, base, light } = getTheme(label);
-
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const id = `${label}-accordion`;
+  const familyListId = `${label}-family-ids`;
 
-  const [editableIds, setEditableIds] = useState<EntityId[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [undo, setUndo] = useState<UndoState<T> | null>(null);
+  const [focusId, setFocusId] = useState<EntityId | null>(null);
+
+  const [order, setOrder] = useState<EntityId[] | null>(null);
+  const [sortedBy, setSortedBy] = useState<{ field: string; dir: 1 | -1 } | null>(
+    null,
+  );
+
+  const [pinned, setPinned] = useState<{ ids: EntityId[]; note: string } | null>(
+    null,
+  );
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const undoTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    setPayloadItems(items);
-  }, [items]);
+    if (!highlight || highlight.list !== listKey) return;
+    setIsOpen(true);
+    setQuery("");
+    setPinned({ ids: highlight.entityIds, note: highlight.note });
+    containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [highlight, listKey]);
 
-  const renderInput = ({
-    item,
-    field,
-    value,
-    isEditable,
-    type,
-    options,
-  }: RenderInputProps<T>) => {
-    if (!isEditable) {
-      return (
-        <input
-          readOnly={true}
-          value={(getDisplayValue(value, type, options) as string) ?? ""}
-          className="rounded-lg px-2 py-0.5 transition[background-color] duration-200"
-        />
+  useEffect(() => {
+    return () => {
+      if (undoTimer.current !== null) window.clearTimeout(undoTimer.current);
+    };
+  }, []);
+
+  const rows = useMemo(() => {
+    let visible = items;
+
+    if (pinned) {
+      const wanted = new Set(pinned.ids);
+      visible = visible.filter((item) => wanted.has(item.id));
+    }
+
+    const trimmed = query.trim().toLowerCase();
+    if (trimmed) {
+      visible = visible.filter((item) =>
+        searchText(item, colDefs).includes(trimmed),
       );
     }
 
-    if (type === InputType.select && options) {
+    if (order) {
+      const position = new Map(order.map((entityId, index) => [entityId, index]));
+      visible = [...visible].sort(
+        (a, b) =>
+          (position.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+          (position.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+      );
+    }
+
+    return visible;
+  }, [items, colDefs, query, order, pinned]);
+
+  const edit = (updated: T) => {
+    onChange(items.map((item) => (item.id === updated.id ? updated : item)));
+  };
+
+  const setField = (item: T, field: string, value: unknown) => {
+    edit({ ...item, [field]: value });
+  };
+
+  const remove = (item: T) => {
+    const index = items.findIndex((candidate) => candidate.id === item.id);
+    onChange(items.filter((candidate) => candidate.id !== item.id));
+
+    const name = (item as { name?: string }).name?.trim();
+    setUndo({
+      item,
+      index,
+      description: name ? `Removed ${name}` : "Removed a row",
+    });
+
+    if (undoTimer.current !== null) window.clearTimeout(undoTimer.current);
+    undoTimer.current = window.setTimeout(() => setUndo(null), UNDO_MS);
+  };
+
+  const undoRemove = () => {
+    if (!undo) return;
+    const restored = [...items];
+    restored.splice(Math.min(undo.index, restored.length), 0, undo.item);
+    onChange(restored);
+    setUndo(null);
+    if (undoTimer.current !== null) window.clearTimeout(undoTimer.current);
+  };
+
+  const add = () => {
+    const item = makeBlank();
+    onChange([...items, item]);
+    setQuery("");
+    setPinned(null);
+    setFocusId(item.id);
+  };
+
+  const toggleSort = (col: ColDef) => {
+    const dir: 1 | -1 = sortedBy?.field === col.field && sortedBy.dir === 1 ? -1 : 1;
+    const sorted = [...items].sort(
+      (a, b) => sortValue(a, col).localeCompare(sortValue(b, col)) * dir,
+    );
+    setOrder(sorted.map((item) => item.id));
+    setSortedBy({ field: col.field, dir });
+  };
+
+  const clearSort = () => {
+    setOrder(null);
+    setSortedBy(null);
+  };
+
+  const renderInput = (item: T, col: ColDef) => {
+    const raw = (item as Record<string, unknown>)[col.field];
+    const type: InputType = col.type ?? "text";
+    const fieldLabel = `${col.name} for ${(item as { name?: string }).name || "new row"}`;
+
+    if (type === "select") {
+      return (
+        <select
+          aria-label={fieldLabel}
+          className={`w-full rounded-lg px-2 py-0.5 ${dark}`}
+          value={(raw as string) ?? ""}
+          onChange={(e) => setField(item, col.field, e.target.value)}
+        >
+          <option value="">—</option>
+          {(col.options ?? []).map((opt) => (
+            <option key={opt.key} value={opt.key}>
+              {opt.value}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    if (type === "multiSelect") {
       return (
         <Select
-          options={options}
-          value={[value as string]}
-          onChange={(val) => edit({ ...item, [field]: val })}
+          label={fieldLabel}
+          options={col.options ?? []}
+          value={(raw as string[]) ?? []}
+          onChange={(val) => setField(item, col.field, val)}
         />
       );
     }
 
-    if (type === InputType.multiSelect && options) {
+    if (type === "timeRange") {
+      const range = (raw as TimeSlot) ?? { startTime: "", endTime: "" };
       return (
-        <Select
-          options={options}
-          value={value as string[]}
-          isMulti
-          onChange={(val) => edit({ ...item, [field]: val })}
-        />
-      );
-    }
-
-    if (type === InputType.timeRange && field === "preferredTimeRange") {
-      return (
-        <div className="flex flex-row">
+        <div className="flex flex-row items-center">
           <input
+            aria-label={`${fieldLabel} from`}
             className={`rounded-lg px-2 py-0.5 ${dark}`}
             type="time"
-            value={(value as TimeSlot)?.startTime}
+            value={range.startTime ?? ""}
             onChange={(e) =>
-              edit({
-                ...item,
-                preferredTimeRange: {
-                  ...(value as TimeSlot),
-                  startTime: e.target.value,
-                },
-              })
+              setField(item, col.field, { ...range, startTime: e.target.value })
             }
           />
           <p className="px-2">—</p>
           <input
+            aria-label={`${fieldLabel} until`}
             className={`rounded-lg px-2 py-0.5 ${dark}`}
             type="time"
-            value={(value as TimeSlot)?.endTime}
+            value={range.endTime ?? ""}
             onChange={(e) =>
-              edit({
-                ...item,
-                preferredTimeRange: {
-                  ...(value as TimeSlot),
-                  endTime: e.target.value,
-                },
-              })
+              setField(item, col.field, { ...range, endTime: e.target.value })
             }
           />
         </div>
@@ -142,136 +258,214 @@ export const InputAccordion = <T extends object & WithId>({
 
     return (
       <input
-        value={(value as string) ?? ""}
-        className={`rounded-lg px-2 ${dark}`}
-        onChange={(e) =>
-          edit({
-            ...item,
-            [field]: e.target.value,
-          })
+        aria-label={fieldLabel}
+        value={(raw as string) ?? ""}
+        list={type === "family" ? familyListId : undefined}
+        className={`w-full rounded-lg px-2 py-0.5 ${dark}`}
+        ref={
+          col.field === "name"
+            ? (element: HTMLInputElement | null) => {
+                if (element && focusId === item.id) {
+                  element.focus();
+                  setFocusId(null);
+                }
+              }
+            : undefined
         }
+        onChange={(e) => setField(item, col.field, e.target.value)}
       />
     );
   };
 
+  const filtering = query.trim() !== "" || pinned !== null;
+
   return (
-    <div className="w-full">
-      <input
+    <div className="w-full" ref={containerRef}>
+      <button
+        type="button"
         id={id}
-        type="checkbox"
-        checked={isOpen}
-        className="peer sr-only"
-      />
-      <label
-        htmlFor={id}
-        className={`w-full flex justify-center items-center ${base} rounded-lg py-2 peer-checked:rounded-b-none`}
+        aria-expanded={isOpen}
+        className={`w-full flex justify-between items-center gap-4 px-4 ${base} rounded-lg py-2 ${
+          isOpen ? "rounded-b-none" : ""
+        }`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        {label} ( {isOpen ? "Close" : "Expand"} )
-      </label>
-      <div
-        className="overflow-hidden h-fit max-h-0 rounded-b-lg 
-        peer-checked:max-h-75 peer-checked:overflow-auto transition-[max-height] duration-500 ease-in-out 
-        [&::-webkit-scrollbar]:w-2
-      [&::-webkit-scrollbar-track]:bg-neutral-700 [&::-webkit-scrollbar-track]:rounded-lg
-      [&::-webkit-scrollbar-thumb]:bg-neutral-500 [&::-webkit-scrollbar-thumb]:rounded-lg"
-      >
-        <table className="w-full">
-          <thead>
-            <tr>
-              {colDefs.map((col) => (
-                <th
-                  className={`sticky top-0 ${dark} text-start px-4 py-2`}
-                  key={col.field}
-                >
-                  {col.name}
-                </th>
-              ))}
-              <th
-                className={`sticky top-0 ${dark} text-start px-4 py-2`}
-                key={"Actions"}
-              ></th>
-            </tr>
-          </thead>
+        <span className="font-semibold">
+          {step && <span className="opacity-70 font-normal">{step} </span>}
+          {label} ({items.length})
+          {filtering && (
+            <span className="font-normal opacity-80"> · showing {rows.length}</span>
+          )}
+        </span>
+        <span aria-hidden="true">{isOpen ? "▴" : "▾"}</span>
+      </button>
 
-          <tbody>
-            {items.map((item) => {
-              const isEditable = editableIds.includes(item.id);
-              return (
-                <tr className={light} key={item.id}>
+      {isOpen && (
+        <div className="rounded-b-lg">
+          <div
+            className={`flex flex-wrap items-center gap-2 px-4 py-2 ${dark}`}
+          >
+            <input
+              type="search"
+              aria-label={`Search ${label.toLowerCase()}`}
+              placeholder={`Search ${label.toLowerCase()}…`}
+              className="rounded-lg px-2 py-1 bg-slate-900/40 border border-slate-400 min-w-56 grow"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {sortedBy && (
+              <button
+                type="button"
+                className="rounded-lg px-3 py-1 bg-slate-800 hover:bg-slate-700 cursor-pointer"
+                onClick={clearSort}
+              >
+                Clear sort
+              </button>
+            )}
+          </div>
+
+          {pinned && (
+            <div className="flex items-center justify-between gap-4 px-4 py-2 bg-amber-900 text-sm">
+              <span>{pinned.note}</span>
+              <button
+                type="button"
+                className="underline cursor-pointer whitespace-nowrap"
+                onClick={() => setPinned(null)}
+              >
+                Show all {items.length}
+              </button>
+            </div>
+          )}
+
+          <div
+            className="max-h-[70vh] overflow-auto rounded-b-lg
+            [&::-webkit-scrollbar]:w-2
+            [&::-webkit-scrollbar-track]:bg-neutral-700 [&::-webkit-scrollbar-track]:rounded-lg
+            [&::-webkit-scrollbar-thumb]:bg-neutral-500 [&::-webkit-scrollbar-thumb]:rounded-lg"
+          >
+            <table className="w-full">
+              <thead>
+                <tr>
                   {colDefs.map((col) => {
-                    const { type, options } = col;
-                    const field = col.field as keyof T;
-                    const value =
-                      type === InputType.timeRange
-                        ? (item[field] as TimeSlot)
-                        : (item[field] as string | string[]);
-
+                    const active = sortedBy?.field === col.field;
                     return (
-                      <td
-                        key={`${item.id}-${String(field)}`}
-                        className="text-start px-2 py-2"
-                      >
-                        {renderInput({
-                          item,
-                          field,
-                          value,
-                          isEditable,
-                          type,
-                          options,
-                        })}
-                      </td>
-                    );
-                  })}
-                  <td>
-                    {isEditable ? (
-                      <button
-                        className="w-24 bg-blue-800 rounded-lg p-1 mx-4 hover:bg-blue-700 hover:cursor-pointer transition[background-color] duration-250"
-                        onClick={() => {
-                          setEditableIds((prev) =>
-                            prev.filter((x) => x !== item.id),
-                          );
-                        }}
-                      >
-                        Save
-                      </button>
-                    ) : (
-                      <button
-                        className="w-24 bg-slate-800 rounded-lg p-1 mx-4 hover:bg-slate-700 hover:cursor-pointer transition[background-color] duration-250"
-                        onClick={() =>
-                          setEditableIds((prev) => [...prev, item.id])
+                      <th
+                        className={`sticky top-0 ${dark} text-start px-2 py-2`}
+                        key={col.field}
+                        aria-sort={
+                          active
+                            ? sortedBy.dir === 1
+                              ? "ascending"
+                              : "descending"
+                            : "none"
                         }
                       >
-                        Edit
-                      </button>
-                    )}
-                    <button
-                      onClick={() => remove(item.id)}
-                      className="w-24 bg-red-800 rounded-lg p-1 hover:bg-red-700 hover:cursor-pointer transition[background-color] duration-250"
+                        {col.sortable === false ? (
+                          col.name
+                        ) : (
+                          <button
+                            type="button"
+                            className="cursor-pointer hover:underline"
+                            onClick={() => toggleSort(col)}
+                          >
+                            {col.name}
+                            <span aria-hidden="true">
+                              {active ? (sortedBy.dir === 1 ? " ▲" : " ▼") : ""}
+                            </span>
+                          </button>
+                        )}
+                      </th>
+                    );
+                  })}
+                  <th className={`sticky top-0 ${dark} text-start px-2 py-2`}>
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {rows.length === 0 && (
+                  <tr className={light}>
+                    <td
+                      colSpan={colDefs.length + 1}
+                      className="px-4 py-6 text-center opacity-80"
                     >
-                      Remove
+                      {items.length === 0
+                        ? `No ${label.toLowerCase()} yet — press Add to start one.`
+                        : "No rows match that search."}
+                    </td>
+                  </tr>
+                )}
+
+                {rows.map((item) => {
+                  const isHighlighted = pinned?.ids.includes(item.id) ?? false;
+                  return (
+                    <tr
+                      className={`${light} ${
+                        isHighlighted ? "outline-2 outline-amber-300" : ""
+                      }`}
+                      key={item.id}
+                    >
+                      {colDefs.map((col) => (
+                        <td
+                          key={`${item.id}-${col.field}`}
+                          className="text-start px-2 py-2"
+                        >
+                          {renderInput(item, col)}
+                        </td>
+                      ))}
+                      <td className="px-2">
+                        <button
+                          type="button"
+                          onClick={() => remove(item)}
+                          className="w-24 bg-red-800 rounded-lg p-1 hover:bg-red-700 cursor-pointer transition-[background-color] duration-250"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                <tr className={light}>
+                  <td colSpan={colDefs.length}></td>
+                  <td className="px-2">
+                    <button
+                      type="button"
+                      className="w-24 bg-blue-800 rounded-lg my-2 p-1 hover:bg-blue-700 cursor-pointer transition-[background-color] duration-250"
+                      onClick={add}
+                    >
+                      Add
                     </button>
                   </td>
                 </tr>
-              );
-            })}
-            <tr className={light}>
-              <td colSpan={colDefs.length}></td>
-              <td>
-                <button
-                  className="w-24 bg-blue-800 rounded-lg mb-2 p-1 hover:bg-blue-700 hover:cursor-pointer transition[background-color] duration-250"
-                  onClick={() => {
-                    const newItem = add();
-                    setEditableIds((prev) => [...prev, newItem.id]);
-                  }}
-                >
-                  Add
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </tbody>
+            </table>
+          </div>
+
+          <datalist id={familyListId}>
+            {familyIds.map((familyId) => (
+              <option key={familyId} value={familyId} />
+            ))}
+          </datalist>
+        </div>
+      )}
+
+      {undo && (
+        <div
+          role="status"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-slate-900 border border-slate-500 rounded-lg px-4 py-2 shadow-lg"
+        >
+          <span>{undo.description}</span>
+          <button
+            type="button"
+            className="underline cursor-pointer"
+            onClick={undoRemove}
+          >
+            Undo
+          </button>
+        </div>
+      )}
     </div>
   );
 };

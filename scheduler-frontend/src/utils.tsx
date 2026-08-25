@@ -1,20 +1,18 @@
-import { THEMES } from "./types";
+import { THEMES, type ThemeScale } from "./types";
 
-export function getTheme(value: string) {
-  switch (value) {
-    case "BANJO":
-      return THEMES.amber;
-    case "FIDDLE":
-      return THEMES.blue;
-    case "Teachers":
-    case "FLUTE":
-      return THEMES.emerald;
-    case "GUITAR":
-      return THEMES.fuchsia;
-    case "WHISTLE":
-      return THEMES.red;
-    case "Students":
-    default:
-      return THEMES.slate;
-  }
+const THEME_BY_KEY: Record<string, ThemeScale> = {
+  BANJO: THEMES.amber,
+  FIDDLE: THEMES.blue,
+  FLUTE: THEMES.emerald,
+  GUITAR: THEMES.fuchsia,
+  WHISTLE: THEMES.red,
+  BODHRAN: THEMES.teal,
+  MANDOLIN: THEMES.violet,
+  ACCORDION: THEMES.orange,
+  Teachers: THEMES.emerald,
+  Students: THEMES.slate,
+};
+
+export function getTheme(value: string): ThemeScale {
+  return THEME_BY_KEY[value] ?? THEMES.slate;
 }
