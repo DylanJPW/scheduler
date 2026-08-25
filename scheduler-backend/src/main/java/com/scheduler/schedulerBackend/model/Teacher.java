@@ -4,21 +4,20 @@ import com.scheduler.schedulerBackend.enums.Instrument;
 
 import java.util.List;
 
-public class Teacher {
-    private String name;
+public class Teacher extends Person {
     private List<Instrument> instruments;
 
+    public Teacher() {
+    }
+
     public Teacher(String name, List<Instrument> instruments) {
-        this.name = name;
+        super(name);
         this.instruments = instruments;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public Teacher(String name, TimeSlot preferredTimeRange, List<Instrument> instruments) {
+        super(name, preferredTimeRange);
+        this.instruments = instruments;
     }
 
     public List<Instrument> getInstruments() {

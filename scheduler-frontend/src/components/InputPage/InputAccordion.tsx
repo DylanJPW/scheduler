@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import {
+  InputType,
   type EntityId,
   type ColDef,
   type WithId,
-  type InputType,
-  InputSelectType,
   type KeyValue,
 } from "./types";
 import { getTheme } from "../../utils";
 import { useInputAccordion } from "./useInputAccordion";
 import { Select } from "../shared/Select";
+import type { TimeSlot } from "../../types";
 
 interface InputAccordion<T> {
   label: string;
@@ -18,8 +18,10 @@ interface InputAccordion<T> {
   setPayloadItems: (value: T[]) => void;
 }
 
+type DisplayValueType = string | string[] | TimeSlot;
+
 interface RenderInputProps<T> {
-  value: string | string[];
+  value: DisplayValueType;
   isEditable: boolean;
   item: T;
   field: keyof T;
@@ -27,11 +29,20 @@ interface RenderInputProps<T> {
   options?: KeyValue[];
 }
 
-function getDisplayValue(value: string | string[], options: KeyValue[] = []) {
-  if (Array.isArray(value)) {
-    return value
+function getDisplayValue(
+  value: DisplayValueType,
+  type: InputType = "text",
+  options: KeyValue[] = [],
+) {
+  if (type === InputType.multiSelect) {
+    return (value as string[])
       .map((v) => options.find((o) => o.key === v)?.value ?? v)
       .join(", ");
+  }
+  if (type === InputType.timeRange) {
+    return (value as TimeSlot)?.startTime && (value as TimeSlot)?.endTime
+      ? `${(value as TimeSlot)?.startTime} — ${(value as TimeSlot)?.endTime}`
+      : "No preference";
   }
   return options.find((o) => o.key === value)?.value ?? value;
 }
@@ -66,13 +77,13 @@ export const InputAccordion = <T extends object & WithId>({
       return (
         <input
           readOnly={true}
-          value={getDisplayValue(value as string, options)}
-          className={`rounded-lg px-2 py-0.5 ${isEditable ? dark : ""} transition[background-color] duration-200`}
+          value={getDisplayValue(value, type, options) as string}
+          className="rounded-lg px-2 py-0.5 transition[background-color] duration-200"
         />
       );
     }
 
-    if (type === InputSelectType.select && options) {
+    if (type === InputType.select && options) {
       return (
         <Select
           options={options}
@@ -82,7 +93,7 @@ export const InputAccordion = <T extends object & WithId>({
       );
     }
 
-    if (type === InputSelectType.multiSelect && options) {
+    if (type === InputType.multiSelect && options) {
       return (
         <Select
           options={options}
@@ -90,6 +101,42 @@ export const InputAccordion = <T extends object & WithId>({
           isMulti
           onChange={(val) => edit({ ...item, [field]: val })}
         />
+      );
+    }
+
+    if (type === InputType.timeRange && field === "preferredTimeRange") {
+      return (
+        <div className="flex flex-row">
+          <input
+            className={`rounded-lg px-2 py-0.5 ${dark}`}
+            type="time"
+            value={(value as TimeSlot)?.startTime}
+            onChange={(e) =>
+              edit({
+                ...item,
+                preferredTimeRange: {
+                  ...(value as TimeSlot),
+                  startTime: e.target.value,
+                },
+              })
+            }
+          />
+          <p className="px-2">—</p>
+          <input
+            className={`rounded-lg px-2 py-0.5 ${dark}`}
+            type="time"
+            value={(value as TimeSlot)?.endTime}
+            onChange={(e) =>
+              edit({
+                ...item,
+                preferredTimeRange: {
+                  ...(value as TimeSlot),
+                  endTime: e.target.value,
+                },
+              })
+            }
+          />
+        </div>
       );
     }
 
@@ -155,7 +202,10 @@ export const InputAccordion = <T extends object & WithId>({
                   {colDefs.map((col) => {
                     const { type, options } = col;
                     const field = col.field as keyof T;
-                    const value = item[field] as string | string[];
+                    const value =
+                      type === InputType.timeRange
+                        ? (item[field] as TimeSlot)
+                        : (item[field] as string | string[]);
 
                     return (
                       <td

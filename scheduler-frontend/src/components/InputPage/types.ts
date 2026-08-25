@@ -3,11 +3,14 @@ import type { Student, Teacher } from "../../types";
 export type EntityId = number | string;
 export type WithId = { id: EntityId };
 
-export const InputSelectType = {
+export const InputType = {
+  text: "text",
   select: "select",
   multiSelect: "multiSelect",
+  timeRange: "timeRange",
 };
-export type InputType = "text" | keyof typeof InputSelectType;
+
+export type InputType = keyof typeof InputType;
 
 export type KeyValue = {
   [key: string]: string;
