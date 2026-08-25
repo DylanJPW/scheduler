@@ -2,6 +2,7 @@ package com.scheduler.schedulerBackend.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.scheduler.schedulerBackend.config.SchedulingRules;
 import com.scheduler.schedulerBackend.enums.Instrument;
 import com.scheduler.schedulerBackend.utils.LocalTimeDeserialiser;
 import org.optaplanner.core.api.domain.solution.PlanningEntityCollectionProperty;
@@ -11,6 +12,7 @@ import org.optaplanner.core.api.domain.solution.ProblemFactCollectionProperty;
 import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 
+import java.time.Duration;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,12 +70,12 @@ public class TimeTable {
         this.dayStart = dayStart;
         this.dayEnd = dayEnd;
         this.lengthOfLesson = lengthOfLesson;
-        this.timeSlotList = generateTimeSlots(dayStart, dayEnd, lengthOfLesson);
-        this.lessonList = generateLessons(studentList);
-        this.studentAssignmentList = generateStudentAssignments(studentList);
+        generateSchedule();
     }
 
-    public void generateSchedule() {
+    public final void generateSchedule() {
+        validate();
+
         if (this.timeSlotList == null || this.timeSlotList.isEmpty()) {
             this.timeSlotList = generateTimeSlots(dayStart, dayEnd, lengthOfLesson);
         }
@@ -82,6 +84,34 @@ public class TimeTable {
         }
         if (this.studentAssignmentList == null || this.studentAssignmentList.isEmpty()) {
             this.studentAssignmentList = generateStudentAssignments(studentList);
+        }
+    }
+
+    private void validate() {
+        if (dayStart == null || dayEnd == null) {
+            throw new IllegalArgumentException("dayStart and dayEnd are both required.");
+        }
+        if (!dayStart.isBefore(dayEnd)) {
+            throw new IllegalArgumentException(
+                    "dayStart (" + dayStart + ") must be before dayEnd (" + dayEnd + ").");
+        }
+        if (lengthOfLesson < SchedulingRules.MIN_LESSON_MINUTES
+                || lengthOfLesson > SchedulingRules.MAX_LESSON_MINUTES) {
+            throw new IllegalArgumentException(
+                    "lengthOfLesson must be between " + SchedulingRules.MIN_LESSON_MINUTES
+                            + " and " + SchedulingRules.MAX_LESSON_MINUTES
+                            + " minutes, but was " + lengthOfLesson + ".");
+        }
+        if (studentList == null || studentList.isEmpty()) {
+            throw new IllegalArgumentException("At least one student is required.");
+        }
+        if (teacherList == null || teacherList.isEmpty()) {
+            throw new IllegalArgumentException("At least one teacher is required.");
+        }
+        if (Duration.between(dayStart, dayEnd).toMinutes() < lengthOfLesson) {
+            throw new IllegalArgumentException(
+                    "The evening is shorter than one class: " + dayStart + "-" + dayEnd
+                            + " cannot fit a " + lengthOfLesson + " minute class.");
         }
     }
 
@@ -96,7 +126,8 @@ public class TimeTable {
             Instrument instrument = entry.getKey();
             int studentCount = entry.getValue().size();
 
-            int lessonCount = (int) Math.ceil(studentCount / 6.0);
+            int lessonCount = (int) Math.ceil(
+                    studentCount / (double) SchedulingRules.MAX_STUDENTS_PER_CLASS);
 
             for (int i = 0; i < lessonCount; i++) {
                 lessons.add(new Lesson(id++, instrument));
@@ -121,12 +152,19 @@ public class TimeTable {
         List<TimeSlot> slots = new ArrayList<>();
         LocalTime currentStart = start;
 
-        while (currentStart.plusMinutes(lessonLength).isBefore(end) || currentStart.plusMinutes(lessonLength).equals(end)) {
+        while (!currentStart.plusMinutes(lessonLength).isAfter(end)) {
             LocalTime currentEnd = currentStart.plusMinutes(lessonLength);
             slots.add(new TimeSlot(currentStart, currentEnd));
             currentStart = currentEnd;
         }
         return slots;
+    }
+
+    public long getUnusedMinutes() {
+        if (dayStart == null || dayEnd == null || lengthOfLesson <= 0) {
+            return 0;
+        }
+        return Duration.between(dayStart, dayEnd).toMinutes() % lengthOfLesson;
     }
 
     public List<TimeSlot> getTimeSlotList() {
@@ -173,20 +211,20 @@ public class TimeTable {
         return score;
     }
 
-    public LocalTime getFirstLessonStartTime() {
+    public LocalTime getDayStart() {
         return dayStart;
     }
 
-    public void setFirstLessonStartTime(LocalTime firstLessonStartTime) {
-        this.dayStart = firstLessonStartTime;
+    public void setDayStart(LocalTime dayStart) {
+        this.dayStart = dayStart;
     }
 
-    public LocalTime getLastLessonEndTime() {
+    public LocalTime getDayEnd() {
         return dayEnd;
     }
 
-    public void setLastLessonEndTime(LocalTime lastLessonEndTime) {
-        this.dayEnd = lastLessonEndTime;
+    public void setDayEnd(LocalTime dayEnd) {
+        this.dayEnd = dayEnd;
     }
 
     public int getLengthOfLesson() {

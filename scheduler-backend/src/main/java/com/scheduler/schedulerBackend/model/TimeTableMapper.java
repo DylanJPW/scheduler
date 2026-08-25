@@ -1,5 +1,7 @@
 package com.scheduler.schedulerBackend.model;
 
+import com.scheduler.schedulerBackend.config.SchedulingRules;
+import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,17 +22,29 @@ public class TimeTableMapper {
                         ));
 
         return solution.getLessonList().stream()
-                .map(lesson -> new LessonDTO(
-                        lesson,
-                        lessonStudentMap.getOrDefault(lesson, List.of())
-                ))
+                .filter(lesson -> !lessonStudentMap.getOrDefault(lesson, List.of()).isEmpty())
+                .map(lesson -> new LessonDTO(lesson, lessonStudentMap.get(lesson)))
                 .toList();
     }
 
     public TimeTableDTO toTimeTableDTOs(TimeTable solution) {
         List<LessonDTO> lessonList = toLessonDTOs(solution);
-        List<TimeSlot> timeSlotList = solution.getTimeSlotList();
 
-        return new TimeTableDTO(lessonList, timeSlotList);
+        TimeTableDTO dto = new TimeTableDTO(lessonList, solution.getTimeSlotList());
+
+        HardSoftScore score = solution.getScore();
+        if (score != null) {
+            dto.setScore(score.toString());
+            dto.setFeasible(score.isFeasible());
+            dto.setHardScore(score.hardScore());
+            dto.setSoftScore(score.softScore());
+        }
+
+        dto.setUnusedMinutes(solution.getUnusedMinutes());
+        dto.setEmptyClassCount(solution.getLessonList().size() - lessonList.size());
+        dto.setMinStudentsPerClass(SchedulingRules.MIN_STUDENTS_PER_CLASS);
+        dto.setMaxStudentsPerClass(SchedulingRules.MAX_STUDENTS_PER_CLASS);
+
+        return dto;
     }
 }

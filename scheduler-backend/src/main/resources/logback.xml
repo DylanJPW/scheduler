@@ -5,9 +5,16 @@
         </encoder>
     </appender>
 
-    <root level="debug">
+    <!--
+      FIX (review 3.7): root was at debug. That was right while you were hunting the April bug,
+      but it floods the console and measurably slows a 15-second solve, because OptaPlanner
+      formats a log line for an enormous number of moves. Flip org.optaplanner back to debug only
+      when you are actually debugging the solver.
+    -->
+    <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="org.optaplanner" level="debug"/>
+    <logger name="com.scheduler" level="debug"/>
+    <logger name="org.optaplanner" level="info"/>
 </configuration>
