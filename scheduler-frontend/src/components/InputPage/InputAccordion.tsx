@@ -77,7 +77,7 @@ export const InputAccordion = <T extends object & WithId>({
       return (
         <input
           readOnly={true}
-          value={getDisplayValue(value, type, options) as string}
+          value={(getDisplayValue(value, type, options) as string) ?? ""}
           className="rounded-lg px-2 py-0.5 transition[background-color] duration-200"
         />
       );
@@ -142,7 +142,7 @@ export const InputAccordion = <T extends object & WithId>({
 
     return (
       <input
-        value={value as string}
+        value={(value as string) ?? ""}
         className={`rounded-lg px-2 ${dark}`}
         onChange={(e) =>
           edit({

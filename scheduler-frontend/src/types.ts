@@ -65,6 +65,7 @@ interface Person {
 export interface Student extends Person {
   instrument: string;
   skillLevel: string;
+  familyId?: string;
 }
 
 export interface Teacher extends Person {

@@ -12,5 +12,8 @@ public final class SchedulingRules {
     public static final int MIN_LESSON_MINUTES = 5;
     public static final int MAX_LESSON_MINUTES = 240;
 
+    /** Soft penalty charged per time slot of gap between two siblings' classes.*/
+    public static final int SIBLING_GAP_PENALTY = 10;
+
     private SchedulingRules() {}
 }

@@ -1,37 +1,68 @@
 [
   {
     "id": 1,
-    "name": "John",
-    "instruments": ["GUITAR"]
+    "name": "Máire Ní Chonaill",
+    "instruments": ["FIDDLE", "MANDOLIN"]
   },
   {
     "id": 2,
-    "name": "Joe",
-    "instruments": ["WHISTLE"]
+    "name": "Seán Ó Riada",
+    "instruments": ["FIDDLE", "BANJO"],
+    "preferredTimeRange": {
+      "startTime": "18:00",
+      "endTime": "19:30"
+    }
   },
   {
     "id": 3,
-    "name": "John Joe",
-    "instruments": ["BANJO", "WHISTLE"]
-  },
-  {
-    "id": 4,
-    "name": "Paul",
-    "instruments": ["GUITAR", "WHISTLE", "FLUTE"]
-  },
-  {
-    "id": 5,
-    "name": "John Paul",
-    "instruments": ["FIDDLE"]
-  },
-  {
-    "id": 6,
-    "name": "Jane",
+    "name": "Bríd Ní Dhomhnaill",
     "instruments": ["WHISTLE", "FLUTE"]
   },
   {
+    "id": 4,
+    "name": "Pádraig Mac Suibhne",
+    "instruments": ["FLUTE", "WHISTLE"],
+    "preferredTimeRange": {
+      "startTime": "19:00",
+      "endTime": "20:00"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Órla Ní Cheallaigh",
+    "instruments": ["ACCORDION", "FIDDLE"]
+  },
+  {
+    "id": 6,
+    "name": "Colm Ó Sé",
+    "instruments": ["BODHRAN", "BANJO"]
+  },
+  {
     "id": 7,
-    "name": "Janette",
-    "instruments": ["GUITAR", "BANJO"]
+    "name": "Aisling Nic Gearailt",
+    "instruments": ["GUITAR", "MANDOLIN"],
+    "preferredTimeRange": {
+      "startTime": "18:00",
+      "endTime": "19:00"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Liam Ó Muirí",
+    "instruments": ["GUITAR", "BANJO", "BODHRAN"]
+  },
+  {
+    "id": 9,
+    "name": "Nuala Ní Ghallchóir",
+    "instruments": ["WHISTLE", "FIDDLE"]
+  },
+  {
+    "id": 10,
+    "name": "Donncha Ó Loingsigh",
+    "instruments": ["ACCORDION", "FLUTE", "MANDOLIN"],
+    "preferredTimeRange": {
+      "startTime": "19:00",
+      "endTime": "20:00"
+    }
   }
 ]

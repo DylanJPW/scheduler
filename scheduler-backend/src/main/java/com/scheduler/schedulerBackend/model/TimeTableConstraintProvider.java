@@ -26,6 +26,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 emptyClass(constraintFactory),
                 studentDoesNotPreferTime(constraintFactory),
                 teacherDoesNotPreferTime(constraintFactory),
+                siblingsScheduledApart(constraintFactory),
         };
     }
 
@@ -111,7 +112,38 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Teacher Does Not Prefer Time");
     }
 
+    Constraint siblingsScheduledApart(ConstraintFactory factory) {
+        // Siblings should be at the club at roughly the same time, so a parent makes one
+        // trip and one wait instead of two. Every pair of students sharing a familyId is
+        // penalised in proportion to how many time slots separate their classes.
+        return factory.forEach(StudentAssignment.class)
+                .filter(TimeTableConstraintProvider::hasSiblingGroup)
+                .join(factory.forEach(StudentAssignment.class)
+                                .filter(TimeTableConstraintProvider::hasSiblingGroup),
+                        Joiners.equal(sa -> sa.getStudent().getFamilyId()),
+                        Joiners.lessThan(StudentAssignment::getId))
+                .filter((a, b) -> slotsApart(a, b) > 0)
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.SIBLING_GAP_PENALTY),
+                        TimeTableConstraintProvider::slotsApart)
+                .asConstraint("Siblings Scheduled Apart");
+    }
+
     // ------------------------------------------------------- shared helpers
+
+    private static boolean hasSiblingGroup(StudentAssignment sa) {
+        return sa.getStudent() != null && sa.getStudent().getFamilyId() != null;
+    }
+
+    static int slotsApart(StudentAssignment a, StudentAssignment b) {
+        LocalTime startA = lessonStartOf(a);
+        LocalTime startB = lessonStartOf(b);
+        if (startA == null || startB == null) {
+            return 0;
+        }
+        long minutesApart = Math.abs(Duration.between(startA, startB).toMinutes());
+        long slotLength = Math.max(1, a.getLesson().getDuration());
+        return (int) (minutesApart / slotLength);
+    }
 
     private static LocalTime lessonStartOf(StudentAssignment sa) {
         Lesson lesson = sa.getLesson();
@@ -127,7 +159,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
     private static boolean isOutsidePreference(LocalTime lessonStart, TimeSlot preference) {
         if (lessonStart == null || preference == null
                 || preference.getStartTime() == null || preference.getEndTime() == null) {
-            return false; // no preference expressed, or nothing scheduled yet: nothing to penalise
+            return false;
         }
         return lessonStart.isBefore(preference.getStartTime())
                 || lessonStart.isAfter(preference.getEndTime());

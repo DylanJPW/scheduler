@@ -8,6 +8,7 @@ import {
 import { TimeSlotInput } from "./TimeSlotInput";
 import { useInputPage } from "./useInputPage";
 import { TimeTable } from "../TimeTable/TimeTable";
+import { Families } from "../TimeTable/Families";
 import { type ColDef } from "./types";
 import { mapDictToKeyValue } from "../shared/utils";
 
@@ -25,6 +26,7 @@ const studentColDefs: ColDef[] = [
     type: "select",
     options: mapDictToKeyValue(SkillLevel),
   },
+  { name: "Family", field: "familyId" },
   { name: "Preferred Time", field: "preferredTimeRange", type: "timeRange" },
 ];
 
@@ -94,6 +96,8 @@ export const InputPage = () => {
         lessonList={lessonList}
         result={result}
       />
+
+      <Families timeSlotList={timeSlotList} lessonList={lessonList} />
     </div>
   );
 };
