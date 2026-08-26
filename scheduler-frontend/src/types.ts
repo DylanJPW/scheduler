@@ -98,6 +98,7 @@ export interface Student extends Person {
 
 export interface Teacher extends Person {
   instruments: string[];
+  preferredRoomId?: string;
 }
 
 export type RoomInput = Omit<Room, "id">;

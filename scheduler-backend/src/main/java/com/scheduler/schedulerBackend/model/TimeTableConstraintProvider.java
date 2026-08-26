@@ -27,6 +27,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 emptyClass(constraintFactory),
                 studentDoesNotPreferTime(constraintFactory),
                 teacherDoesNotPreferTime(constraintFactory),
+                teacherOutsidePreferredRoom(constraintFactory),
                 siblingsScheduledApart(constraintFactory),
         };
     }
@@ -122,6 +123,17 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                                 lesson.getTeacher().getPreferredTimeRange(),
                                 lesson.getDuration()))
                 .asConstraint("Teacher Does Not Prefer Time");
+    }
+
+    Constraint teacherOutsidePreferredRoom(ConstraintFactory factory) {
+        // Teachers keep their gear, their stands and their music in one place, so a teacher who
+        // holds one room all evening has an easier night than one who moves every class.
+        return factory.forEach(Lesson.class)
+                .filter(lesson -> lesson.getTeacher().hasPreferredRoom()
+                        && !lesson.getTeacher().getPreferredRoomId()
+                                .equals(lesson.getRoom().getKey()))
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.TEACHER_ROOM_PENALTY))
+                .asConstraint("Teacher Outside Preferred Room");
     }
 
     Constraint siblingsScheduledApart(ConstraintFactory factory) {

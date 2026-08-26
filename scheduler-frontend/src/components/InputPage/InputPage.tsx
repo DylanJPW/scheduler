@@ -40,13 +40,22 @@ const studentColDefs: ColDef[] = [
 
 const roomColDefs: ColDef[] = [{ name: "Room", field: "name" }];
 
-const teacherColDefs: ColDef[] = [
+const buildTeacherColDefs = (rooms: Room[]): ColDef[] => [
   { name: "Name", field: "name" },
   {
     name: "Instruments",
     field: "instruments",
     type: "multiSelect",
     options: mapDictToKeyValue(Instrument),
+  },
+  {
+    name: "Preferred Room",
+    field: "preferredRoomId",
+    type: "select",
+    options: rooms.map((room) => ({
+      key: String(room.id),
+      value: room.name || "(unnamed room)",
+    })),
   },
   {
     name: "Preferred Time",
@@ -98,6 +107,8 @@ export const InputPage = () => {
   } = useInputPage();
 
   const [highlight, setHighlight] = useState<Highlight | null>(null);
+
+  const teacherColDefs = useMemo(() => buildTeacherColDefs(rooms), [rooms]);
 
   const familyIds = useMemo(() => {
     const ids = new Set<string>();

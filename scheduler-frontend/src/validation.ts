@@ -167,6 +167,48 @@ export function validateInput({
     });
   }
 
+  const roomIds = new Set(rooms.map((r) => String(r.id).trim().toLowerCase()));
+  const roomNameById = new Map(
+    rooms.map((r) => [String(r.id).trim().toLowerCase(), r.name || "(unnamed room)"]),
+  );
+
+  const wantSameRoom = new Map<string, Teacher[]>();
+  const wantMissingRoom: Teacher[] = [];
+  for (const teacher of teachers) {
+    const wanted = teacher.preferredRoomId?.trim().toLowerCase();
+    if (!wanted) continue;
+    if (!roomIds.has(wanted)) {
+      wantMissingRoom.push(teacher);
+      continue;
+    }
+    const list = wantSameRoom.get(wanted) ?? [];
+    list.push(teacher);
+    wantSameRoom.set(wanted, list);
+  }
+
+  const contested = [...wantSameRoom.entries()].filter(([, list]) => list.length > 1);
+  for (const [roomId, list] of contested) {
+    problems.push({
+      id: `contested-room-${roomId}`,
+      severity: "warning",
+      message: `${list.length} teachers all want ${roomNameById.get(roomId)} (${list
+        .map((t) => t.name || "(no name)")
+        .join(", ")}). They cannot all have it, so some will be moved.`,
+      list: "teachers",
+      entityIds: list.map((t) => t.id),
+    });
+  }
+
+  if (wantMissingRoom.length > 0) {
+    problems.push({
+      id: "teacher-room-missing",
+      severity: "warning",
+      message: `${wantMissingRoom.length} ${plural(wantMissingRoom.length, "teacher wants a room", "teachers want rooms")} that ${plural(wantMissingRoom.length, "is", "are")} no longer in the room list, so the preference cannot be met. Pick the room again.`,
+      list: "teachers",
+      entityIds: wantMissingRoom.map((t) => t.id),
+    });
+  }
+
   /* ----------------------------------------- instruments nobody can teach */
 
   const taught = new Set<string>();
@@ -206,6 +248,9 @@ export function validateInput({
       classesNeeded += Math.ceil(playing.length / Math.max(1, maxClassSize));
     }
 
+    // Two ceilings on how many classes can run at once: a teacher can only be in one place,
+    // and so can a room. The tighter one decides, and naming it is what makes the message
+    // useful - otherwise she is told to add a teacher when what she needs is a room.
     const limit = Math.min(teachers.length, rooms.length);
     const capacity = evening.slots * limit;
     if (classesNeeded > capacity) {
