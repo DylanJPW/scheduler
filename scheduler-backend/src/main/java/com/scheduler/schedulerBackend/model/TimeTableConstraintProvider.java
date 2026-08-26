@@ -16,6 +16,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
         return new Constraint[] {
                 // Hard constraints - these must never be broken
                 teacherConflict(constraintFactory),
+                roomConflict(constraintFactory),
                 teacherLacksInstrument(constraintFactory),
                 maxStudentsPerLesson(constraintFactory),
                 studentHasWrongInstrument(constraintFactory),
@@ -41,6 +42,17 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                         Joiners.lessThan(Lesson::getId))
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Teacher Conflict");
+    }
+
+    Constraint roomConflict(ConstraintFactory constraintFactory) {
+        // Two classes cannot share a room at the same time.
+        return constraintFactory.forEach(Lesson.class)
+                .join(Lesson.class,
+                        Joiners.equal(Lesson::getTimeSlot),
+                        Joiners.equal(Lesson::getRoom),
+                        Joiners.lessThan(Lesson::getId))
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Room Conflict");
     }
 
     Constraint teacherLacksInstrument(ConstraintFactory constraintFactory) {

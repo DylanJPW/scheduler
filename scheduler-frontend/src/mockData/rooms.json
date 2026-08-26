@@ -1,0 +1,34 @@
+[
+  {
+    "id": "room-1",
+    "name": "Room 1"
+  },
+  {
+    "id": "room-2",
+    "name": "Room 2"
+  },
+  {
+    "id": "upstairs",
+    "name": "Upstairs"
+  },
+  {
+    "id": "kitchen",
+    "name": "Kitchen"
+  },
+  {
+    "id": "bandstand-l",
+    "name": "Bandstand L"
+  },
+  {
+    "id": "bandstand-front",
+    "name": "Bandstand Front"
+  },
+  {
+    "id": "bandstand-r",
+    "name": "Bandstand R"
+  },
+  {
+    "id": "bandstand-centre",
+    "name": "Bandstand Centre"
+  }
+]

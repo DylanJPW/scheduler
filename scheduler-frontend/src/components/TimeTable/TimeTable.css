@@ -3,6 +3,11 @@
   border-bottom-width: 1px;
 }
 
+@page {
+  size: landscape;
+  margin: 10mm;
+}
+
 @media print {
   .printable,
   .printable * {
@@ -25,6 +30,12 @@
   .printable td {
     border: 1px solid #999 !important;
     padding: 4px 6px !important;
+    vertical-align: top;
+    word-break: break-word;
+  }
+
+  .printable {
+    font-size: 10pt;
   }
 
   .printable tr,

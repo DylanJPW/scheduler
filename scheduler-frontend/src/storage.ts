@@ -1,4 +1,4 @@
-import type { Student, Teacher } from "./types";
+import type { Room, Student, Teacher } from "./types";
 import type { TimeSlotParams } from "./components/InputPage/types";
 
 const STORAGE_KEY = "scheduler.input.v1";
@@ -6,6 +6,7 @@ const STORAGE_KEY = "scheduler.input.v1";
 export interface StoredInput {
   students: Student[];
   teachers: Teacher[];
+  rooms: Room[];
   timeSlotParams: TimeSlotParams;
 }
 
@@ -17,7 +18,7 @@ function parseStoredInput(raw: string): StoredInput | null {
   const parsed: unknown = JSON.parse(raw);
   if (!isObject(parsed)) return null;
 
-  const { students, teachers, timeSlotParams } = parsed;
+  const { students, teachers, rooms, timeSlotParams } = parsed;
   if (!Array.isArray(students) || !Array.isArray(teachers)) return null;
   if (!isObject(timeSlotParams)) return null;
 
@@ -28,6 +29,7 @@ function parseStoredInput(raw: string): StoredInput | null {
   return {
     students: students as Student[],
     teachers: teachers as Teacher[],
+    rooms: rooms as Room[],
     timeSlotParams: { dayStart, dayEnd, lengthOfLesson },
   };
 }
@@ -46,8 +48,7 @@ export function saveInput(input: StoredInput): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(input));
   } catch {
-    // Quota exceeded or storage disabled — nothing useful to do, and the app
-    // is still perfectly usable without it.
+    // Quota exceeded or storage disabled
   }
 }
 
@@ -55,6 +56,6 @@ export function clearInput(): void {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
   } catch {
-    // As above.
+    // Quota exceeded or storage disabled
   }
 }

@@ -1,5 +1,6 @@
 import type {
   Lesson,
+  Room,
   SolveResponse,
   Student,
   Teacher,
@@ -8,6 +9,7 @@ import type {
 
 export interface TimeTableProps {
   timeSlotList: TimeSlot[];
+  roomList: Room[];
   lessonList: Lesson[];
   result?: SolveResponse | null;
   highlightedLessonIds?: number[];
@@ -16,6 +18,7 @@ export interface TimeTableProps {
 export interface ScheduleViewProps {
   lessonList: Lesson[];
   timeSlotList: TimeSlot[];
+  roomList: Room[];
   students: Student[];
   teachers: Teacher[];
 }

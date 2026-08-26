@@ -11,6 +11,7 @@ const THEME_BY_KEY: Record<string, ThemeScale> = {
   ACCORDION: THEMES.orange,
   Teachers: THEMES.emerald,
   Students: THEMES.slate,
+  Rooms: THEMES.violet,
 };
 
 export function getTheme(value: string): ThemeScale {

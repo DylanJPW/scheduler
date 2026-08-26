@@ -3,6 +3,7 @@ import { InputAccordion } from "./InputAccordion";
 import {
   Instrument,
   SkillLevel,
+  type Room,
   type Student,
   type Teacher,
 } from "../../types";
@@ -37,6 +38,8 @@ const studentColDefs: ColDef[] = [
   },
 ];
 
+const roomColDefs: ColDef[] = [{ name: "Room", field: "name" }];
+
 const teacherColDefs: ColDef[] = [
   { name: "Name", field: "name" },
   {
@@ -52,6 +55,11 @@ const teacherColDefs: ColDef[] = [
     sortable: false,
   },
 ];
+
+const newRoom = (): Room => ({
+  id: crypto.randomUUID(),
+  name: "",
+});
 
 const newStudent = (): Student => ({
   id: crypto.randomUUID(),
@@ -72,12 +80,15 @@ export const InputPage = () => {
     setStudents,
     teachers,
     setTeachers,
+    rooms,
+    setRooms,
     timeSlotParams,
     setTimeSlotParams,
     solveTimeTable,
     resetToSample,
     restoredFromSave,
     timeSlotList,
+    roomList,
     lessonList,
     isSolving,
     elapsedMs,
@@ -139,9 +150,20 @@ export const InputPage = () => {
           setTimeSlotParams={setTimeSlotParams}
         />
 
+        <InputAccordion<Room>
+          label="Rooms"
+          step="2."
+          listKey="rooms"
+          items={rooms}
+          colDefs={roomColDefs}
+          onChange={setRooms}
+          makeBlank={newRoom}
+          highlight={highlight}
+        />
+
         <InputAccordion<Student>
           label="Students"
-          step="2."
+          step="3."
           listKey="students"
           items={students}
           colDefs={studentColDefs}
@@ -153,7 +175,7 @@ export const InputPage = () => {
 
         <InputAccordion<Teacher>
           label="Teachers"
-          step="3."
+          step="4."
           listKey="teachers"
           items={teachers}
           colDefs={teacherColDefs}
@@ -174,6 +196,7 @@ export const InputPage = () => {
 
       <ScheduleViews
         timeSlotList={timeSlotList}
+        roomList={roomList}
         lessonList={lessonList}
         students={students}
         teachers={teachers}

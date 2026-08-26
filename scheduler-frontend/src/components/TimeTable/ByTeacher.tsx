@@ -111,6 +111,11 @@ export const ByTeacher = ({
                             {" "}
                             ({lesson.students?.length ?? 0})
                           </span>
+                          {lesson.room?.name && (
+                            <span className="opacity-70 block text-sm">
+                              {lesson.room.name}
+                            </span>
+                          )}
                           {here.length > 1 && (
                             <span className="text-red-300 font-semibold">
                               {" "}
