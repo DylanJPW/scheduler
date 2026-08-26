@@ -6,6 +6,8 @@ export type ThemeScale = {
   lighter: string;
 };
 
+// Tailwind scans source files for complete class names, so every class has to
+// appear here as a literal string. Never build one with string concatenation.
 export const THEMES: Record<string, ThemeScale> = {
   amber: {
     darker: "bg-amber-900",
@@ -49,15 +51,38 @@ export const THEMES: Record<string, ThemeScale> = {
     light: "bg-slate-600",
     lighter: "bg-slate-500",
   },
+  teal: {
+    darker: "bg-teal-900",
+    dark: "bg-teal-800",
+    base: "bg-teal-700",
+    light: "bg-teal-600",
+    lighter: "bg-teal-500",
+  },
+  violet: {
+    darker: "bg-violet-900",
+    dark: "bg-violet-800",
+    base: "bg-violet-700",
+    light: "bg-violet-600",
+    lighter: "bg-violet-500",
+  },
+  orange: {
+    darker: "bg-orange-900",
+    dark: "bg-orange-800",
+    base: "bg-orange-700",
+    light: "bg-orange-600",
+    lighter: "bg-orange-500",
+  },
 };
+
+export type EntityId = number | string;
 
 export interface TimeSlot {
   startTime: string;
   endTime: string;
 }
 
-interface Person {
-  id: number | string;
+export interface Person {
+  id: EntityId;
   name: string;
   preferredTimeRange?: TimeSlot;
 }
@@ -69,7 +94,7 @@ export interface Student extends Person {
 }
 
 export interface Teacher extends Person {
-  instruments: Instrument[];
+  instruments: string[];
 }
 
 export type StudentInput = Omit<Student, "id">;
@@ -77,7 +102,7 @@ export type TeacherInput = Omit<Teacher, "id">;
 
 export interface Lesson {
   id: number;
-  instrument: Instrument;
+  instrument: string;
   students: Student[];
   teacher: Teacher;
   timeSlot: TimeSlot;
@@ -104,6 +129,21 @@ export const SkillLevel = {
 
 export type SkillLevel = keyof typeof SkillLevel;
 
+export function instrumentLabel(key: string): string {
+  return Instrument[key as Instrument] ?? key;
+}
+
+export function skillLevelLabel(key: string): string {
+  return SkillLevel[key as SkillLevel] ?? key;
+}
+
+export interface BrokenRule {
+  constraintName: string;
+  description: string;
+  scoreImpact: string;
+  lessonIds: number[];
+}
+
 export interface SolveResponse {
   lessonList: Lesson[];
   timeSlotList: TimeSlot[];
@@ -115,4 +155,5 @@ export interface SolveResponse {
   emptyClassCount: number;
   minStudentsPerClass: number;
   maxStudentsPerClass: number;
+  brokenRules?: BrokenRule[];
 }

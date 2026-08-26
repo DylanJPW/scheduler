@@ -1,19 +1,18 @@
-import type { Student, Teacher } from "../../types";
+import type { EntityId, Student, Teacher } from "../../types";
 
-export type EntityId = number | string;
+export type { EntityId } from "../../types";
 export type WithId = { id: EntityId };
 
-export const InputType = {
-  text: "text",
-  select: "select",
-  multiSelect: "multiSelect",
-  timeRange: "timeRange",
-};
-
-export type InputType = keyof typeof InputType;
+export type InputType =
+  | "text"
+  | "family"
+  | "select"
+  | "multiSelect"
+  | "timeRange";
 
 export type KeyValue = {
-  [key: string]: string;
+  key: string;
+  value: string;
 };
 
 export type ColDef = {
@@ -21,6 +20,7 @@ export type ColDef = {
   field: string;
   type?: InputType;
   options?: KeyValue[];
+  sortable?: boolean;
 };
 
 export interface TimeSlotParams {
@@ -32,4 +32,11 @@ export interface TimeSlotParams {
 export interface SolverPayload extends TimeSlotParams {
   studentList: Student[];
   teacherList: Teacher[];
+}
+
+export interface Highlight {
+  list: "students" | "teachers";
+  entityIds: EntityId[];
+  note: string;
+  nonce: number;
 }

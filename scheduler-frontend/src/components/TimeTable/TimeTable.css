@@ -2,3 +2,37 @@
   font-weight: bold;
   border-bottom-width: 1px;
 }
+
+@media print {
+  .printable,
+  .printable * {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .printable {
+    border: none !important;
+  }
+
+  .printable table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .printable th,
+  .printable td {
+    border: 1px solid #999 !important;
+    padding: 4px 6px !important;
+  }
+
+  .printable tr,
+  .printable li {
+    break-inside: avoid;
+  }
+
+  .printable thead {
+    display: table-header-group;
+  }
+}

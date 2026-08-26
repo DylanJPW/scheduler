@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import type { Lesson, SolveResponse, Student, Teacher, TimeSlot } from "../../types";
+import type { SolveResponse, Student, Teacher, TimeSlot } from "../../types";
 import type { SolverPayload, TimeSlotParams } from "./types";
 import {
+  ASSUMED_MAX_CLASS_SIZE,
   DEFAULT_DAY_END,
   DEFAULT_DAY_START,
   DEFAULT_LESSON_LENGTH,
 } from "../../constants";
+import { buildTimeSlots } from "../../evening";
+import { clearInput, loadInput, saveInput } from "../../storage";
+import { validateInput } from "../../validation";
 
-import mockStudents from "../../mockData/students.json";
-import mockTeachers from "../../mockData/teachers.json";
-import mockTimeSlots from "../../mockData/timeslots.json";
+import sampleStudents from "../../mockData/students.json";
+import sampleTeachers from "../../mockData/teachers.json";
 
 const requestURL = "api/timeTable";
 
@@ -33,20 +36,60 @@ function describeError(error: unknown): string {
 }
 
 export function useInputPage() {
-  const [students, setStudents] = useState<Student[]>(mockStudents);
-  const [teachers, setTeachers] = useState<Teacher[]>(
-    mockTeachers as Teacher[],
-  );
-  const [timeSlotList, setTimeSlotList] = useState<TimeSlot[]>(mockTimeSlots);
-  const [lessonList, setLessonList] = useState<Lesson[]>([] as Lesson[]);
+  const restored = useMemo(() => loadInput(), []);
 
-  const [timeSlotParams, setTimeSlotParams] = useState<TimeSlotParams>(
-    defaultTimeSlotParams,
+  const [students, setStudents] = useState<Student[]>(
+    restored?.students ?? (sampleStudents as Student[]),
   );
+  const [teachers, setTeachers] = useState<Teacher[]>(
+    restored?.teachers ?? (sampleTeachers as Teacher[]),
+  );
+  const [timeSlotParams, setTimeSlotParams] = useState<TimeSlotParams>(
+    restored?.timeSlotParams ?? defaultTimeSlotParams,
+  );
+  const [restoredFromSave] = useState(restored !== null);
 
   const [isSolving, setIsSolving] = useState(false);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SolveResponse | null>(null);
+
+  const initial = useRef({ students, teachers, timeSlotParams });
+  useEffect(() => {
+    const untouched =
+      students === initial.current.students &&
+      teachers === initial.current.teachers &&
+      timeSlotParams === initial.current.timeSlotParams;
+    if (untouched) return;
+    saveInput({ students, teachers, timeSlotParams });
+  }, [students, teachers, timeSlotParams]);
+
+  const solveStartedAt = useRef(0);
+  useEffect(() => {
+    if (!isSolving) return;
+    solveStartedAt.current = Date.now();
+    setElapsedMs(0);
+    const timer = window.setInterval(
+      () => setElapsedMs(Date.now() - solveStartedAt.current),
+      200,
+    );
+    return () => window.clearInterval(timer);
+  }, [isSolving]);
+
+  const maxClassSize = result?.maxStudentsPerClass ?? ASSUMED_MAX_CLASS_SIZE;
+
+  const problems = useMemo(
+    () => validateInput({ students, teachers, timeSlotParams, maxClassSize }),
+    [students, teachers, timeSlotParams, maxClassSize],
+  );
+
+  const lessonList = result?.lessonList ?? [];
+
+  const previewSlots = useMemo(
+    () => buildTimeSlots(timeSlotParams),
+    [timeSlotParams],
+  );
+  const timeSlotList: TimeSlot[] = result?.timeSlotList ?? previewSlots;
 
   const solveTimeTable = async () => {
     setIsSolving(true);
@@ -62,14 +105,21 @@ export function useInputPage() {
         payload,
       );
       setResult(data);
-      setLessonList(data.lessonList);
-      setTimeSlotList(data.timeSlotList);
     } catch (e) {
       setError(describeError(e));
       setResult(null);
     } finally {
       setIsSolving(false);
     }
+  };
+
+  const resetToSample = () => {
+    clearInput();
+    setStudents(sampleStudents as Student[]);
+    setTeachers(sampleTeachers as Teacher[]);
+    setTimeSlotParams(defaultTimeSlotParams);
+    setResult(null);
+    setError(null);
   };
 
   return {
@@ -80,12 +130,14 @@ export function useInputPage() {
     timeSlotParams,
     setTimeSlotParams,
     solveTimeTable,
+    resetToSample,
+    restoredFromSave,
     timeSlotList,
-    setTimeSlotList,
     lessonList,
-    setLessonList,
     isSolving,
+    elapsedMs,
     error,
     result,
+    problems,
   };
 }
