@@ -12,11 +12,20 @@ public final class SchedulingRules {
     public static final int MIN_LESSON_MINUTES = 5;
     public static final int MAX_LESSON_MINUTES = 240;
 
-    /** Soft penalty charged per time slot of gap between two siblings' classes. */
-    public static final int SIBLING_GAP_PENALTY = 10;
+    /** Soft penalty charged per time slot by which a class sits later than the first slot of the evening. */
+    public static final int LATE_SLOT_PENALTY = 1;
+
+    /** Soft penalty charged per time slot a student or teacher is placed outside their preferred range. */
+    public static final int PREFERRED_TIME_PENALTY = 10;
 
     /** Soft penalty charged per class a teacher teaches outside the room they asked for. */
-    public static final int TEACHER_ROOM_PENALTY = 3;
+    public static final int TEACHER_ROOM_PENALTY = 30;
+
+    /** Soft penalty charged per time slot of gap between two siblings' classes. */
+    public static final int SIBLING_GAP_PENALTY = 100;
+
+    /** Soft penalty charged per student a class is short of MIN_STUDENTS_PER_CLASS. */
+    public static final int SMALL_CLASS_PENALTY = 1000;
 
     private SchedulingRules() {}
 }
