@@ -28,6 +28,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 teacherOutsidePreferredRoom(constraintFactory),
                 siblingsScheduledApart(constraintFactory),
                 preferEarlierTimeSlots(constraintFactory),
+                youngStudentsScheduledLate(constraintFactory),
         };
     }
 
@@ -171,10 +172,34 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Prefer Earlier Time Slots");
     }
 
+    Constraint youngStudentsScheduledLate(ConstraintFactory factory) {
+        // Small children home before the teenagers. Charged per slot late, per year under the
+        // pivot, so the evening sorts itself youngest-first. Unknown age is never charged.
+        return factory.forEach(StudentAssignment.class)
+                .filter(sa -> yearsUnderPivot(sa.getStudent()) > 0)
+                .join(Lesson.class,
+                        Joiners.equal(StudentAssignment::getLesson, (Lesson lesson) -> lesson))
+                .join(TimeSlot.class,
+                        Joiners.greaterThan(
+                                (StudentAssignment sa, Lesson lesson) ->
+                                        lesson.getTimeSlot().getStartTime(),
+                                (TimeSlot slot) -> slot.getStartTime()))
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.YOUNG_STUDENT_LATE_PENALTY),
+                        (sa, lesson, slot) -> yearsUnderPivot(sa.getStudent()))
+                .asConstraint("Young Students Scheduled Late");
+    }
+
     // ------------------------------------------------------- shared helpers
 
     private static boolean hasSiblingGroup(StudentAssignment sa) {
         return sa.getStudent() != null && sa.getStudent().getFamilyId() != null;
+    }
+
+    static int yearsUnderPivot(Student student) {
+        if (student == null || student.getAgeInYears() == null) {
+            return 0;
+        }
+        return Math.max(0, SchedulingRules.YOUTH_PIVOT_AGE - student.getAgeInYears());
     }
 
     static int slotsApart(Lesson a, Lesson b) {

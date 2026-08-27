@@ -115,6 +115,51 @@ export function validateInput({
     });
   }
 
+  /* ------------------------------------------------------- dates of birth */
+
+  const withoutDob = students.filter((s) => blank(s.dateOfBirth));
+  if (withoutDob.length > 0 && withoutDob.length < students.length) {
+    problems.push({
+      id: "student-no-dob",
+      severity: "warning",
+      message: `${withoutDob.length} ${plural(withoutDob.length, "student has", "students have")} no date of birth. They are still scheduled, but the rule that puts younger students earlier in the evening will pass over them.`,
+      list: "students",
+      entityIds: withoutDob.map((s) => s.id),
+    });
+  }
+
+  const impossibleDob = students.filter((s) => {
+    if (blank(s.dateOfBirth)) return false;
+    const born = new Date(`${s.dateOfBirth}T00:00:00`);
+    if (Number.isNaN(born.getTime())) return true;
+    return born > new Date();
+  });
+  if (impossibleDob.length > 0) {
+    problems.push({
+      id: "student-bad-dob",
+      severity: "error",
+      message: `${impossibleDob.length} ${plural(impossibleDob.length, "student has a date", "students have dates")} of birth that cannot be right - check for a mistyped year.`,
+      list: "students",
+      entityIds: impossibleDob.map((s) => s.id),
+    });
+  }
+
+  const implausibleAge = students.filter((s) => {
+    if (blank(s.dateOfBirth)) return false;
+    const born = new Date(`${s.dateOfBirth}T00:00:00`);
+    if (Number.isNaN(born.getTime()) || born > new Date()) return false;
+    return born < new Date("1900-01-01T00:00:00");
+  });
+  if (implausibleAge.length > 0) {
+    problems.push({
+      id: "student-old-dob",
+      severity: "warning",
+      message: `${implausibleAge.length} ${plural(implausibleAge.length, "student has a date", "students have dates")} of birth before 1900. That is almost certainly a typo.`,
+      list: "students",
+      entityIds: implausibleAge.map((s) => s.id),
+    });
+  }
+
   const namelessTeachers = teachers.filter((t) => blank(t.name));
   if (namelessTeachers.length > 0) {
     problems.push({

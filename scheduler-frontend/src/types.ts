@@ -94,6 +94,8 @@ export interface Student extends Person {
   instrument: string;
   skillLevel: string;
   familyId?: string;
+  dateOfBirth?: string;
+  ageInYears?: number;
 }
 
 export interface Teacher extends Person {

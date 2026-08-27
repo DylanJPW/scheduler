@@ -5,6 +5,7 @@ export type WithId = { id: EntityId };
 
 export type InputType =
   | "text"
+  | "date"
   | "family"
   | "select"
   | "multiSelect"

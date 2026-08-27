@@ -11,6 +11,7 @@ import type { ScheduleViewProps } from "./types";
 interface Placement {
   id: EntityId | undefined;
   name: string;
+  age: number | undefined;
   familyId: string;
   instrument: string;
   teacherName: string;
@@ -27,6 +28,7 @@ export function buildPlacements(lessonList: Lesson[]): Placement[] {
       placements.push({
         id: student.id,
         name: student.name,
+        age: student.ageInYears,
         familyId: student.familyId?.trim().toLowerCase() ?? "",
         instrument: lesson.instrument,
         teacherName: lesson.teacher?.name ?? "unassigned",
@@ -99,6 +101,7 @@ export const ByStudent = ({ lessonList, students }: ScheduleViewProps) => {
         <thead className="border-b border-slate-600">
           <tr>
             <th className="text-left px-3 py-2">Student</th>
+            <th className="text-left px-3 py-2">Age</th>
             <th className="text-left px-3 py-2">Family</th>
             <th className="text-left px-3 py-2">Instrument</th>
             <th className="text-left px-3 py-2">Time</th>
@@ -118,6 +121,9 @@ export const ByStudent = ({ lessonList, students }: ScheduleViewProps) => {
                 className={startsNewFamily ? "border-t-2 border-t-slate-500" : ""}
               >
                 <td className="text-left px-3 py-2">{placement.name}</td>
+                <td className="text-left px-3 py-2 opacity-80">
+                  {placement.age ?? "—"}
+                </td>
                 <td className="text-left px-3 py-2 opacity-80">
                   {placement.familyId || "—"}
                 </td>

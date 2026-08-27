@@ -15,6 +15,16 @@ public final class SchedulingRules {
     /** Soft penalty charged per time slot by which a class sits later than the first slot of the evening. */
     public static final int LATE_SLOT_PENALTY = 1;
 
+    /**
+     * Soft penalty per time slot a young student sits late, per year they are under
+     * YOUTH_PIVOT_AGE. Effective cost is weight x years-under-pivot x slots-late, so a
+     * seven-year-old three slots late costs 2 x 11 x 3 = 66 while a seventeen-year-old costs 6.
+     */
+    public static final int YOUNG_STUDENT_LATE_PENALTY = 2;
+
+    /** A student this age or older is never pulled earlier by the young-students rule. */
+    public static final int YOUTH_PIVOT_AGE = 18;
+
     /** Soft penalty charged per time slot a student or teacher is placed outside their preferred range. */
     public static final int PREFERRED_TIME_PENALTY = 10;
 

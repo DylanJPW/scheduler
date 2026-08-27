@@ -1,8 +1,13 @@
 package com.scheduler.schedulerBackend.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.scheduler.schedulerBackend.enums.Instrument;
 import com.scheduler.schedulerBackend.enums.SkillLevel;
+import com.scheduler.schedulerBackend.utils.LocalDateDeserialiser;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.Locale;
 
 public class Student extends Person {
@@ -10,6 +15,12 @@ public class Student extends Person {
     private SkillLevel skillLevel;
 
     private String familyId;
+
+    @JsonDeserialize(using = LocalDateDeserialiser.class)
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate dateOfBirth;
+
+    private Integer ageInYears;
 
     public Student() {
     }
@@ -53,6 +64,38 @@ public class Student extends Person {
         this.skillLevel = skillLevel;
     }
 
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public boolean hasDateOfBirth() {
+        return dateOfBirth != null;
+    }
+
+    public Integer getAgeInYears() {
+        return ageInYears;
+    }
+
+    public void setAgeInYears(Integer ageInYears) {
+        this.ageInYears = ageInYears;
+    }
+
+    public boolean hasAge() {
+        return ageInYears != null;
+    }
+
+    public void deriveAge(LocalDate referenceDate) {
+        if (dateOfBirth == null || referenceDate == null || dateOfBirth.isAfter(referenceDate)) {
+            this.ageInYears = null;
+        } else {
+            this.ageInYears = Period.between(dateOfBirth, referenceDate).getYears();
+        }
+    }
+
     public String getFamilyId() {
         return familyId;
     }
@@ -72,6 +115,7 @@ public class Student extends Person {
     @Override
     public String toString() {
         return name + " (" + skillLevel + " " + instrument
+                + (ageInYears == null ? "" : ", aged " + ageInYears)
                 + (familyId == null ? "" : ", family " + familyId) + ")";
     }
 }
