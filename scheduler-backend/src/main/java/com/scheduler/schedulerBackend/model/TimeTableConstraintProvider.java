@@ -16,6 +16,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
         return new Constraint[] {
                 // Hard constraints - these must never be broken
                 teacherConflict(constraintFactory),
+                roomConflict(constraintFactory),
                 teacherLacksInstrument(constraintFactory),
                 maxStudentsPerLesson(constraintFactory),
                 studentHasWrongInstrument(constraintFactory),
@@ -26,6 +27,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 emptyClass(constraintFactory),
                 studentDoesNotPreferTime(constraintFactory),
                 teacherDoesNotPreferTime(constraintFactory),
+                teacherOutsidePreferredRoom(constraintFactory),
                 siblingsScheduledApart(constraintFactory),
         };
     }
@@ -41,6 +43,17 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                         Joiners.lessThan(Lesson::getId))
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Teacher Conflict");
+    }
+
+    Constraint roomConflict(ConstraintFactory constraintFactory) {
+        // Two classes cannot share a room at the same time.
+        return constraintFactory.forEach(Lesson.class)
+                .join(Lesson.class,
+                        Joiners.equal(Lesson::getTimeSlot),
+                        Joiners.equal(Lesson::getRoom),
+                        Joiners.lessThan(Lesson::getId))
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Room Conflict");
     }
 
     Constraint teacherLacksInstrument(ConstraintFactory constraintFactory) {
@@ -90,13 +103,15 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
 
     Constraint studentDoesNotPreferTime(ConstraintFactory factory) {
         return factory.forEach(StudentAssignment.class)
-                .filter(sa -> isOutsidePreference(
-                        lessonStartOf(sa), sa.getStudent().getPreferredTimeRange()))
+                .join(Lesson.class,
+                        Joiners.equal(StudentAssignment::getLesson, (Lesson lesson) -> lesson))
+                .filter((sa, lesson) -> isOutsidePreference(
+                        lessonStartOf(lesson), sa.getStudent().getPreferredTimeRange()))
                 .penalize(HardSoftScore.ONE_SOFT,
-                        sa -> slotsOutsidePreference(
-                                lessonStartOf(sa),
+                        (sa, lesson) -> slotsOutsidePreference(
+                                lessonStartOf(lesson),
                                 sa.getStudent().getPreferredTimeRange(),
-                                sa.getLesson().getDuration()))
+                                lesson.getDuration()))
                 .asConstraint("Student Does Not Prefer Time");
     }
 
@@ -112,19 +127,36 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Teacher Does Not Prefer Time");
     }
 
+    Constraint teacherOutsidePreferredRoom(ConstraintFactory factory) {
+        // Teachers keep their gear, their stands and their music in one place, so a teacher who
+        // holds one room all evening has an easier night than one who moves every class.
+        return factory.forEach(Lesson.class)
+                .filter(lesson -> lesson.getTeacher().hasPreferredRoom()
+                        && !lesson.getTeacher().getPreferredRoomId()
+                        .equals(lesson.getRoom().getKey()))
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.TEACHER_ROOM_PENALTY))
+                .asConstraint("Teacher Outside Preferred Room");
+    }
+
     Constraint siblingsScheduledApart(ConstraintFactory factory) {
         // Siblings should be at the club at roughly the same time, so a parent makes one
         // trip and one wait instead of two. Every pair of students sharing a familyId is
         // penalised in proportion to how many time slots separate their classes.
         return factory.forEach(StudentAssignment.class)
                 .filter(TimeTableConstraintProvider::hasSiblingGroup)
-                .join(factory.forEach(StudentAssignment.class)
-                                .filter(TimeTableConstraintProvider::hasSiblingGroup),
-                        Joiners.equal(sa -> sa.getStudent().getFamilyId()),
-                        Joiners.lessThan(StudentAssignment::getId))
-                .filter((a, b) -> slotsApart(a, b) > 0)
+                .join(Lesson.class,
+                        Joiners.equal(StudentAssignment::getLesson, (Lesson lesson) -> lesson))
+                .join(StudentAssignment.class,
+                        Joiners.equal((sa, lesson) -> sa.getStudent().getFamilyId(),
+                                (StudentAssignment other) -> other.getStudent().getFamilyId()),
+                        Joiners.lessThan((sa, lesson) -> sa.getId(), StudentAssignment::getId))
+                .filter((sa, lesson, other) -> hasSiblingGroup(other))
+                .join(Lesson.class,
+                        Joiners.equal((sa, lesson, other) -> other.getLesson(),
+                                (Lesson otherLesson) -> otherLesson))
+                .filter((sa, lesson, other, otherLesson) -> slotsApart(lesson, otherLesson) > 0)
                 .penalize(HardSoftScore.ofSoft(SchedulingRules.SIBLING_GAP_PENALTY),
-                        TimeTableConstraintProvider::slotsApart)
+                        (sa, lesson, other, otherLesson) -> slotsApart(lesson, otherLesson))
                 .asConstraint("Siblings Scheduled Apart");
     }
 
@@ -134,15 +166,22 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
         return sa.getStudent() != null && sa.getStudent().getFamilyId() != null;
     }
 
-    static int slotsApart(StudentAssignment a, StudentAssignment b) {
+    static int slotsApart(Lesson a, Lesson b) {
         LocalTime startA = lessonStartOf(a);
         LocalTime startB = lessonStartOf(b);
         if (startA == null || startB == null) {
             return 0;
         }
         long minutesApart = Math.abs(Duration.between(startA, startB).toMinutes());
-        long slotLength = Math.max(1, a.getLesson().getDuration());
+        long slotLength = Math.max(1, a.getDuration());
         return (int) (minutesApart / slotLength);
+    }
+
+    static int slotsApart(StudentAssignment a, StudentAssignment b) {
+        if (a.getLesson() == null || b.getLesson() == null) {
+            return 0;
+        }
+        return slotsApart(a.getLesson(), b.getLesson());
     }
 
     private static LocalTime lessonStartOf(StudentAssignment sa) {

@@ -6,8 +6,6 @@ export type ThemeScale = {
   lighter: string;
 };
 
-// Tailwind scans source files for complete class names, so every class has to
-// appear here as a literal string. Never build one with string concatenation.
 export const THEMES: Record<string, ThemeScale> = {
   amber: {
     darker: "bg-amber-900",
@@ -81,6 +79,11 @@ export interface TimeSlot {
   endTime: string;
 }
 
+export interface Room {
+  id: EntityId;
+  name: string;
+}
+
 export interface Person {
   id: EntityId;
   name: string;
@@ -95,8 +98,10 @@ export interface Student extends Person {
 
 export interface Teacher extends Person {
   instruments: string[];
+  preferredRoomId?: string;
 }
 
+export type RoomInput = Omit<Room, "id">;
 export type StudentInput = Omit<Student, "id">;
 export type TeacherInput = Omit<Teacher, "id">;
 
@@ -106,6 +111,7 @@ export interface Lesson {
   students: Student[];
   teacher: Teacher;
   timeSlot: TimeSlot;
+  room: Room;
 }
 
 export const Instrument = {
@@ -147,6 +153,7 @@ export interface BrokenRule {
 export interface SolveResponse {
   lessonList: Lesson[];
   timeSlotList: TimeSlot[];
+  roomList: Room[];
   score: string;
   feasible: boolean;
   hardScore: number;

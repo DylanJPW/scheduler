@@ -6,6 +6,7 @@ public class TimeTableDTO {
 
     private List<LessonDTO> lessonList;
     private List<TimeSlot> timeSlotList;
+    private List<Room> roomList;
 
     private String score;
     private boolean feasible;
@@ -38,6 +39,14 @@ public class TimeTableDTO {
 
     public void setTimeSlotList(List<TimeSlot> timeSlotList) {
         this.timeSlotList = timeSlotList;
+    }
+
+    public List<Room> getRoomList() {
+        return roomList;
+    }
+
+    public void setRoomList(List<Room> roomList) {
+        this.roomList = roomList;
     }
 
     public String getScore() {

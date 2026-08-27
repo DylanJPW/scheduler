@@ -14,6 +14,7 @@ interface Placement {
   familyId: string;
   instrument: string;
   teacherName: string;
+  roomName: string;
   startTime: string;
   endTime: string;
 }
@@ -29,6 +30,7 @@ export function buildPlacements(lessonList: Lesson[]): Placement[] {
         familyId: student.familyId?.trim().toLowerCase() ?? "",
         instrument: lesson.instrument,
         teacherName: lesson.teacher?.name ?? "unassigned",
+        roomName: lesson.room?.name ?? "",
         startTime: lesson.timeSlot?.startTime ?? "",
         endTime: lesson.timeSlot?.endTime ?? "",
       });
@@ -100,6 +102,7 @@ export const ByStudent = ({ lessonList, students }: ScheduleViewProps) => {
             <th className="text-left px-3 py-2">Family</th>
             <th className="text-left px-3 py-2">Instrument</th>
             <th className="text-left px-3 py-2">Time</th>
+            <th className="text-left px-3 py-2">Room</th>
             <th className="text-left px-3 py-2">Teacher</th>
           </tr>
         </thead>
@@ -123,6 +126,9 @@ export const ByStudent = ({ lessonList, students }: ScheduleViewProps) => {
                 </td>
                 <td className="text-left px-3 py-2 whitespace-nowrap">
                   {placement.startTime} – {placement.endTime}
+                </td>
+                <td className="text-left px-3 py-2 whitespace-nowrap">
+                  {placement.roomName || "—"}
                 </td>
                 <td className="text-left px-3 py-2">{placement.teacherName}</td>
               </tr>

@@ -14,7 +14,7 @@ interface ScheduleViewsProps extends ScheduleViewProps {
 type ViewKey = "grid" | "student" | "teacher";
 
 const VIEWS: { key: ViewKey; label: string; blurb: string }[] = [
-  { key: "grid", label: "The evening", blurb: "Every class, slot by slot" },
+  { key: "grid", label: "The evening", blurb: "Every class, room by room" },
   { key: "student", label: "By student", blurb: "What each family needs to know" },
   { key: "teacher", label: "By teacher", blurb: "Each teacher's evening" },
 ];
@@ -95,6 +95,7 @@ const ResultBanner = ({
 
 export const ScheduleViews = ({
   timeSlotList,
+  roomList,
   lessonList,
   students,
   teachers,
@@ -163,6 +164,7 @@ export const ScheduleViews = ({
       {view === "grid" && (
         <TimeTable
           timeSlotList={timeSlotList}
+          roomList={roomList}
           lessonList={lessonList}
           result={result}
           highlightedLessonIds={highlighted}
@@ -172,6 +174,7 @@ export const ScheduleViews = ({
         <ByStudent
           lessonList={lessonList}
           timeSlotList={timeSlotList}
+          roomList={roomList}
           students={students}
           teachers={teachers}
         />
@@ -180,6 +183,7 @@ export const ScheduleViews = ({
         <ByTeacher
           lessonList={lessonList}
           timeSlotList={timeSlotList}
+          roomList={roomList}
           students={students}
           teachers={teachers}
         />

@@ -1,9 +1,15 @@
 import { describeEvening } from "./evening";
-import { instrumentLabel, type EntityId, type Student, type Teacher } from "./types";
+import {
+  instrumentLabel,
+  type EntityId,
+  type Room,
+  type Student,
+  type Teacher,
+} from "./types";
 import type { TimeSlotParams } from "./components/InputPage/types";
 
 export type ProblemSeverity = "error" | "warning";
-export type ProblemList = "students" | "teachers";
+export type ProblemList = "students" | "teachers" | "rooms";
 
 export interface Problem {
   id: string;
@@ -16,6 +22,7 @@ export interface Problem {
 export interface ValidationInput {
   students: Student[];
   teachers: Teacher[];
+  rooms: Room[];
   timeSlotParams: TimeSlotParams;
   maxClassSize: number;
 }
@@ -31,6 +38,7 @@ function plural(count: number, one: string, many: string): string {
 export function validateInput({
   students,
   teachers,
+  rooms,
   timeSlotParams,
   maxClassSize,
 }: ValidationInput): Problem[] {
@@ -59,6 +67,16 @@ export function validateInput({
       severity: "error",
       message: "There are no teachers yet. Add or import some.",
       list: "teachers",
+    });
+  }
+
+  if (rooms.length === 0) {
+    problems.push({
+      id: "no-rooms",
+      severity: "error",
+      message:
+        "There are no rooms yet. Add one row per place a class can run - two classes can never share a room at the same time, so this is also what decides how many classes run at once.",
+      list: "rooms",
     });
   }
 
@@ -119,6 +137,78 @@ export function validateInput({
     });
   }
 
+  const namelessRooms = rooms.filter((r) => blank(r.name));
+  if (namelessRooms.length > 0) {
+    problems.push({
+      id: "room-no-name",
+      severity: "warning",
+      message: `${namelessRooms.length} ${plural(namelessRooms.length, "room has", "rooms have")} no name, so ${plural(namelessRooms.length, "it", "they")} will be numbered for you on the timetable.`,
+      list: "rooms",
+      entityIds: namelessRooms.map((r) => r.id),
+    });
+  }
+
+  const roomsByName = new Map<string, Room[]>();
+  for (const room of rooms) {
+    if (blank(room.name)) continue;
+    const key = room.name.trim().toLowerCase();
+    const list = roomsByName.get(key) ?? [];
+    list.push(room);
+    roomsByName.set(key, list);
+  }
+  const duplicateRooms = [...roomsByName.values()].filter((list) => list.length > 1);
+  if (duplicateRooms.length > 0) {
+    problems.push({
+      id: "duplicate-rooms",
+      severity: "error",
+      message: `${duplicateRooms.length} room ${plural(duplicateRooms.length, "name is", "names are")} used twice. Two rooms with the same name are one room as far as the solver is concerned, which would let two classes share it.`,
+      list: "rooms",
+      entityIds: duplicateRooms.flat().map((r) => r.id),
+    });
+  }
+
+  const roomIds = new Set(rooms.map((r) => String(r.id).trim().toLowerCase()));
+  const roomNameById = new Map(
+    rooms.map((r) => [String(r.id).trim().toLowerCase(), r.name || "(unnamed room)"]),
+  );
+
+  const wantSameRoom = new Map<string, Teacher[]>();
+  const wantMissingRoom: Teacher[] = [];
+  for (const teacher of teachers) {
+    const wanted = teacher.preferredRoomId?.trim().toLowerCase();
+    if (!wanted) continue;
+    if (!roomIds.has(wanted)) {
+      wantMissingRoom.push(teacher);
+      continue;
+    }
+    const list = wantSameRoom.get(wanted) ?? [];
+    list.push(teacher);
+    wantSameRoom.set(wanted, list);
+  }
+
+  const contested = [...wantSameRoom.entries()].filter(([, list]) => list.length > 1);
+  for (const [roomId, list] of contested) {
+    problems.push({
+      id: `contested-room-${roomId}`,
+      severity: "warning",
+      message: `${list.length} teachers all want ${roomNameById.get(roomId)} (${list
+        .map((t) => t.name || "(no name)")
+        .join(", ")}). They cannot all have it, so some will be moved.`,
+      list: "teachers",
+      entityIds: list.map((t) => t.id),
+    });
+  }
+
+  if (wantMissingRoom.length > 0) {
+    problems.push({
+      id: "teacher-room-missing",
+      severity: "warning",
+      message: `${wantMissingRoom.length} ${plural(wantMissingRoom.length, "teacher wants a room", "teachers want rooms")} that ${plural(wantMissingRoom.length, "is", "are")} no longer in the room list, so the preference cannot be met. Pick the room again.`,
+      list: "teachers",
+      entityIds: wantMissingRoom.map((t) => t.id),
+    });
+  }
+
   /* ----------------------------------------- instruments nobody can teach */
 
   const taught = new Set<string>();
@@ -147,17 +237,35 @@ export function validateInput({
 
   /* ------------------------------------------------------------- capacity */
 
-  if (evening.slots > 0 && teachers.length > 0 && students.length > 0) {
+  if (
+    evening.slots > 0 &&
+    teachers.length > 0 &&
+    rooms.length > 0 &&
+    students.length > 0
+  ) {
     let classesNeeded = 0;
     for (const playing of studentsByInstrument.values()) {
       classesNeeded += Math.ceil(playing.length / Math.max(1, maxClassSize));
     }
-    const capacity = evening.slots * teachers.length;
+
+    // Two ceilings on how many classes can run at once: a teacher can only be in one place,
+    // and so can a room. The tighter one decides, and naming it is what makes the message
+    // useful - otherwise she is told to add a teacher when what she needs is a room.
+    const limit = Math.min(teachers.length, rooms.length);
+    const capacity = evening.slots * limit;
     if (classesNeeded > capacity) {
+      const scarcer =
+        rooms.length < teachers.length
+          ? `${rooms.length} ${plural(rooms.length, "room", "rooms")}`
+          : `${teachers.length} ${plural(teachers.length, "teacher", "teachers")}`;
+      const remedy =
+        rooms.length < teachers.length
+          ? "Add a room, lengthen the evening, or shorten the classes."
+          : "Add a teacher, lengthen the evening, or shorten the classes.";
       problems.push({
         id: "capacity",
         severity: "error",
-        message: `These students need at least ${classesNeeded} classes, but ${teachers.length} ${plural(teachers.length, "teacher", "teachers")} across ${evening.slots} class ${plural(evening.slots, "time", "times")} can only run ${capacity}. Add a teacher, lengthen the evening, or shorten the classes.`,
+        message: `These students need at least ${classesNeeded} classes, but ${scarcer} across ${evening.slots} class ${plural(evening.slots, "time", "times")} can only run ${capacity}. ${remedy}`,
       });
     }
   }

@@ -21,6 +21,9 @@ public class Lesson {
     @PlanningVariable(valueRangeProviderRefs = "teacherRange")
     private Teacher teacher;
 
+    @PlanningVariable(valueRangeProviderRefs = "roomRange")
+    private Room room;
+
     public Lesson() {
     }
 
@@ -49,6 +52,14 @@ public class Lesson {
         this.teacher = teacher;
     }
 
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+
     public TimeSlot getTimeSlot() {
         return timeSlot;
     }
@@ -65,6 +76,7 @@ public class Lesson {
     public String toString() {
         return "Lesson for " + instrument +
                 " taught by " + teacher +
-                " at " + timeSlot;
+                " at " + timeSlot +
+                " in " + room;
     }
 }

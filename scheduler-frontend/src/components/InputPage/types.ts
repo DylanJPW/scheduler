@@ -1,4 +1,4 @@
-import type { EntityId, Student, Teacher } from "../../types";
+import type { EntityId, Room, Student, Teacher } from "../../types";
 
 export type { EntityId } from "../../types";
 export type WithId = { id: EntityId };
@@ -32,10 +32,13 @@ export interface TimeSlotParams {
 export interface SolverPayload extends TimeSlotParams {
   studentList: Student[];
   teacherList: Teacher[];
+  roomList: Room[];
 }
 
+export type ListKey = "students" | "teachers" | "rooms";
+
 export interface Highlight {
-  list: "students" | "teachers";
+  list: ListKey;
   entityIds: EntityId[];
   note: string;
   nonce: number;

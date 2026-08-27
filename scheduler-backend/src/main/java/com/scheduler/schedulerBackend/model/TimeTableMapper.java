@@ -40,6 +40,7 @@ public class TimeTableMapper {
             dto.setSoftScore(score.softScore());
         }
 
+        dto.setRoomList(solution.getRoomList());
         dto.setUnusedMinutes(solution.getUnusedMinutes());
         dto.setEmptyClassCount(solution.getLessonList().size() - lessonList.size());
         dto.setMinStudentsPerClass(SchedulingRules.MIN_STUDENTS_PER_CLASS);

@@ -156,6 +156,60 @@ class TimeTableTest {
         assertEquals(4, timeTable.getStudentAssignmentList().size());
     }
 
+    // ----------------------------------------------------------------- rooms
+
+    @Test
+    @DisplayName("with no rooms supplied, enough are invented that the room rule never binds")
+    void generatesRoomsWhenNoneAreSupplied() {
+        TimeTable timeTable = timeTable(students(Instrument.FIDDLE, 12), "18:00", "20:00", 30);
+        timeTable.generateSchedule();
+
+        assertEquals(1, timeTable.getRoomList().size());
+        assertNotNull(timeTable.getRoomList().get(0).getKey());
+    }
+
+    @Test
+    @DisplayName("supplied rooms are kept, in order, and given ids if they arrived without one")
+    void keepsSuppliedRoomsAndFillsInIds() {
+        TimeTable timeTable = timeTable(students(Instrument.FIDDLE, 4), "18:00", "20:00", 30);
+        timeTable.setRoomList(new ArrayList<>(List.of(
+                new Room("r1", "Room 1"),
+                new Room(null, "Kitchen"),
+                new Room(null, null))));
+        timeTable.generateSchedule();
+
+        List<Room> rooms = timeTable.getRoomList();
+        assertEquals(3, rooms.size());
+        assertEquals("Room 1", rooms.get(0).getName());
+        assertEquals("r1", rooms.get(0).getId());
+        assertEquals("kitchen", rooms.get(1).getId(), "an id derived from the name");
+        assertEquals("room-3", rooms.get(2).getId(), "a blank row still gets a usable room");
+    }
+
+    @Test
+    @DisplayName("two rooms with the same name are rejected rather than silently merged")
+    void rejectsDuplicateRooms() {
+        TimeTable timeTable = timeTable(students(Instrument.FIDDLE, 4), "18:00", "20:00", 30);
+        timeTable.setRoomList(new ArrayList<>(List.of(
+                new Room(null, "Kitchen"),
+                new Room(null, " kitchen "))));
+
+        IllegalArgumentException e =
+                assertThrows(IllegalArgumentException.class, timeTable::generateSchedule);
+        assertTrue(e.getMessage().toLowerCase().contains("room"), e.getMessage());
+    }
+
+    @Test
+    @DisplayName("the six-argument constructor takes rooms too")
+    void constructorAcceptsRooms() {
+        TimeTable timeTable = new TimeTable(oneTeacher(), students(Instrument.FLUTE, 4),
+                List.of(new Room("a", "Room 1"), new Room("b", "Kitchen")),
+                LocalTime.of(18, 0), LocalTime.of(20, 0), 30);
+
+        assertEquals(2, timeTable.getRoomList().size());
+        assertEquals(1, timeTable.getLessonList().size());
+    }
+
     private int lessonCountFor(int studentCount) {
         TimeTable timeTable = timeTable(students(Instrument.GUITAR, studentCount), "18:00", "20:00", 30);
         timeTable.generateSchedule();

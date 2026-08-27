@@ -5,6 +5,7 @@ import type {
   Highlight,
   InputType,
   KeyValue,
+  ListKey,
   WithId,
 } from "./types";
 import { getTheme } from "../../utils";
@@ -14,7 +15,7 @@ import type { TimeSlot } from "../../types";
 interface InputAccordionProps<T extends WithId> {
   label: string;
   step?: string;
-  listKey: "students" | "teachers";
+  listKey: ListKey;
   items: T[];
   colDefs: ColDef[];
   onChange: (items: T[]) => void;

@@ -3,6 +3,7 @@ import { InputAccordion } from "./InputAccordion";
 import {
   Instrument,
   SkillLevel,
+  type Room,
   type Student,
   type Teacher,
 } from "../../types";
@@ -37,7 +38,9 @@ const studentColDefs: ColDef[] = [
   },
 ];
 
-const teacherColDefs: ColDef[] = [
+const roomColDefs: ColDef[] = [{ name: "Room", field: "name" }];
+
+const buildTeacherColDefs = (rooms: Room[]): ColDef[] => [
   { name: "Name", field: "name" },
   {
     name: "Instruments",
@@ -46,12 +49,26 @@ const teacherColDefs: ColDef[] = [
     options: mapDictToKeyValue(Instrument),
   },
   {
+    name: "Preferred Room",
+    field: "preferredRoomId",
+    type: "select",
+    options: rooms.map((room) => ({
+      key: String(room.id),
+      value: room.name || "(unnamed room)",
+    })),
+  },
+  {
     name: "Preferred Time",
     field: "preferredTimeRange",
     type: "timeRange",
     sortable: false,
   },
 ];
+
+const newRoom = (): Room => ({
+  id: crypto.randomUUID(),
+  name: "",
+});
 
 const newStudent = (): Student => ({
   id: crypto.randomUUID(),
@@ -72,12 +89,15 @@ export const InputPage = () => {
     setStudents,
     teachers,
     setTeachers,
+    rooms,
+    setRooms,
     timeSlotParams,
     setTimeSlotParams,
     solveTimeTable,
     resetToSample,
     restoredFromSave,
     timeSlotList,
+    roomList,
     lessonList,
     isSolving,
     elapsedMs,
@@ -87,6 +107,8 @@ export const InputPage = () => {
   } = useInputPage();
 
   const [highlight, setHighlight] = useState<Highlight | null>(null);
+
+  const teacherColDefs = useMemo(() => buildTeacherColDefs(rooms), [rooms]);
 
   const familyIds = useMemo(() => {
     const ids = new Set<string>();
@@ -139,9 +161,20 @@ export const InputPage = () => {
           setTimeSlotParams={setTimeSlotParams}
         />
 
+        <InputAccordion<Room>
+          label="Rooms"
+          step="2."
+          listKey="rooms"
+          items={rooms}
+          colDefs={roomColDefs}
+          onChange={setRooms}
+          makeBlank={newRoom}
+          highlight={highlight}
+        />
+
         <InputAccordion<Student>
           label="Students"
-          step="2."
+          step="3."
           listKey="students"
           items={students}
           colDefs={studentColDefs}
@@ -153,7 +186,7 @@ export const InputPage = () => {
 
         <InputAccordion<Teacher>
           label="Teachers"
-          step="3."
+          step="4."
           listKey="teachers"
           items={teachers}
           colDefs={teacherColDefs}
@@ -174,6 +207,7 @@ export const InputPage = () => {
 
       <ScheduleViews
         timeSlotList={timeSlotList}
+        roomList={roomList}
         lessonList={lessonList}
         students={students}
         teachers={teachers}

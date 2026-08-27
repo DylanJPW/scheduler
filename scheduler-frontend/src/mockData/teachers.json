@@ -1,68 +1,94 @@
 [
   {
     "id": 1,
-    "name": "Máire Ní Chonaill",
-    "instruments": ["FIDDLE", "MANDOLIN"]
+    "name": "Nuala Ní Bhaoill",
+    "instruments": [
+      "FIDDLE",
+      "WHISTLE"
+    ],
+    "preferredRoomId": "room-1"
   },
   {
     "id": 2,
-    "name": "Seán Ó Riada",
-    "instruments": ["FIDDLE", "BANJO"],
-    "preferredTimeRange": {
-      "startTime": "18:00",
-      "endTime": "19:30"
-    }
+    "name": "Caitríona Mac Manais",
+    "instruments": [
+      "FLUTE",
+      "WHISTLE"
+    ],
+    "preferredRoomId": "room-2"
   },
   {
     "id": 3,
-    "name": "Bríd Ní Dhomhnaill",
-    "instruments": ["WHISTLE", "FLUTE"]
+    "name": "Deirdre Ó Loingsigh",
+    "instruments": [
+      "FIDDLE"
+    ],
+    "preferredRoomId": "upstairs"
   },
   {
     "id": 4,
-    "name": "Pádraig Mac Suibhne",
-    "instruments": ["FLUTE", "WHISTLE"],
-    "preferredTimeRange": {
-      "startTime": "19:00",
-      "endTime": "20:00"
-    }
+    "name": "Bríd Ní Chatháin",
+    "instruments": [
+      "BANJO",
+      "FIDDLE",
+      "MANDOLIN"
+    ],
+    "preferredRoomId": "kitchen"
   },
   {
     "id": 5,
-    "name": "Órla Ní Cheallaigh",
-    "instruments": ["ACCORDION", "FIDDLE"]
+    "name": "Ruairí Mac Gabhann",
+    "instruments": [
+      "GUITAR",
+      "BODHRAN"
+    ],
+    "preferredRoomId": "bandstand-l"
   },
   {
     "id": 6,
-    "name": "Colm Ó Sé",
-    "instruments": ["BODHRAN", "BANJO"]
+    "name": "Éilis Ní Ainmhire",
+    "instruments": [
+      "WHISTLE"
+    ],
+    "preferredRoomId": "bandstand-front"
   },
   {
     "id": 7,
-    "name": "Aisling Nic Gearailt",
-    "instruments": ["GUITAR", "MANDOLIN"],
-    "preferredTimeRange": {
-      "startTime": "18:00",
-      "endTime": "19:00"
-    }
+    "name": "Gráinne Ní Fhloinn",
+    "instruments": [
+      "WHISTLE"
+    ],
+    "preferredRoomId": "bandstand-r"
   },
   {
     "id": 8,
-    "name": "Liam Ó Muirí",
-    "instruments": ["GUITAR", "BANJO", "BODHRAN"]
+    "name": "Peadar Ó hEadhra",
+    "instruments": [
+      "ACCORDION",
+      "BODHRAN"
+    ],
+    "preferredRoomId": "bandstand-centre"
   },
   {
     "id": 9,
-    "name": "Nuala Ní Ghallchóir",
-    "instruments": ["WHISTLE", "FIDDLE"]
+    "name": "Máirín Ní Loideáin",
+    "instruments": [
+      "WHISTLE"
+    ],
+    "preferredTimeRange": {
+      "startTime": "18:25",
+      "endTime": "18:55"
+    }
   },
   {
     "id": 10,
-    "name": "Donncha Ó Loingsigh",
-    "instruments": ["ACCORDION", "FLUTE", "MANDOLIN"],
+    "name": "Cathal Ó Mearáin",
+    "instruments": [
+      "BODHRAN"
+    ],
     "preferredTimeRange": {
-      "startTime": "19:00",
-      "endTime": "20:00"
+      "startTime": "19:55",
+      "endTime": "20:55"
     }
   }
 ]

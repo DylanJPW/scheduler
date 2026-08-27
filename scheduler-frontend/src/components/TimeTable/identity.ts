@@ -20,3 +20,11 @@ export function findPerson<T>(
   }
   return byName.get(nameKey(candidate.name));
 }
+
+export function roomKey(
+  room: { id?: EntityId; name?: string } | undefined | null,
+): string {
+  if (!room) return "";
+  const id = hasId(room.id) ? String(room.id).trim().toLowerCase() : "";
+  return id || nameKey(room.name);
+}

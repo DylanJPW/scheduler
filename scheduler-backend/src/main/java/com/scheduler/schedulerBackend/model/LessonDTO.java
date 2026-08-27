@@ -9,6 +9,7 @@ public class LessonDTO {
     private Long id;
     private Instrument instrument;
     private TimeSlot timeSlot;
+    private Room room;
     private Teacher teacher;
     private List<Student> students;
 
@@ -16,6 +17,7 @@ public class LessonDTO {
         this.id = lesson.getId();
         this.instrument = lesson.getInstrument();
         this.timeSlot = lesson.getTimeSlot();
+        this.room = lesson.getRoom();
         this.teacher = lesson.getTeacher();
         this.students = students;
     }
@@ -38,6 +40,14 @@ public class LessonDTO {
 
     public void setTimeSlot(TimeSlot timeSlot) {
         this.timeSlot = timeSlot;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 
     public Teacher getTeacher() {

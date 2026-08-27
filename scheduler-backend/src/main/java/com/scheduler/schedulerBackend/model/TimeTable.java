@@ -15,8 +15,10 @@ import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @PlanningSolution
@@ -29,6 +31,10 @@ public class TimeTable {
     @ValueRangeProvider(id = "teacherRange")
     @ProblemFactCollectionProperty
     private List<Teacher> teacherList;
+
+    @ValueRangeProvider(id = "roomRange")
+    @ProblemFactCollectionProperty
+    private List<Room> roomList;
 
     @ProblemFactCollectionProperty
     private List<Student> studentList;
@@ -65,8 +71,19 @@ public class TimeTable {
                      LocalTime dayEnd,
                      int lengthOfLesson) {
 
+        this(teacherList, studentList, null, dayStart, dayEnd, lengthOfLesson);
+    }
+
+    public TimeTable(List<Teacher> teacherList,
+                     List<Student> studentList,
+                     List<Room> roomList,
+                     LocalTime dayStart,
+                     LocalTime dayEnd,
+                     int lengthOfLesson) {
+
         this.teacherList = teacherList;
         this.studentList = studentList;
+        this.roomList = roomList;
         this.dayStart = dayStart;
         this.dayEnd = dayEnd;
         this.lengthOfLesson = lengthOfLesson;
@@ -85,6 +102,39 @@ public class TimeTable {
         if (this.studentAssignmentList == null || this.studentAssignmentList.isEmpty()) {
             this.studentAssignmentList = generateStudentAssignments(studentList);
         }
+        this.roomList = prepareRooms(this.roomList);
+    }
+
+    private List<Room> prepareRooms(List<Room> supplied) {
+        if (supplied == null || supplied.isEmpty()) {
+            int count = Math.max(1, Math.min(teacherList.size(), lessonList.size()));
+            List<Room> generated = new ArrayList<>(count);
+            for (int i = 1; i <= count; i++) {
+                generated.add(new Room("room-" + i, "Room " + i));
+            }
+            return generated;
+        }
+
+        List<Room> rooms = new ArrayList<>(supplied);
+        for (int i = 0; i < rooms.size(); i++) {
+            Room room = rooms.get(i);
+            if (room.getKey() == null) {
+                room.setId("room-" + (i + 1));
+                room.setName("Room " + (i + 1));
+            } else if (room.getId() == null) {
+                room.setId(room.getKey());
+            }
+        }
+
+        Set<String> seen = new HashSet<>();
+        for (Room room : rooms) {
+            if (!seen.add(room.getKey())) {
+                throw new IllegalArgumentException(
+                        "Two rooms have the same name or id (" + room + "). Room names must be distinct.");
+            }
+        }
+
+        return rooms;
     }
 
     private void validate() {
@@ -197,6 +247,14 @@ public class TimeTable {
 
     public void setTeacherList(List<Teacher> teacherList) {
         this.teacherList = teacherList;
+    }
+
+    public List<Room> getRoomList() {
+        return roomList;
+    }
+
+    public void setRoomList(List<Room> roomList) {
+        this.roomList = roomList;
     }
 
     public List<Student> getStudentList() {

@@ -58,7 +58,7 @@ export const SolvePanel = ({
   return (
     <div className="w-full border border-slate-600 rounded-lg">
       <h2 className="text-2xl font-semibold text-left p-3 pb-0">
-        <span className="opacity-70">4.</span> Solve
+        <span className="opacity-70">5.</span> Solve
       </h2>
 
       {(errors.length > 0 || warnings.length > 0) && (
