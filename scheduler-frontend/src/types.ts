@@ -88,6 +88,7 @@ export interface Person {
   id: EntityId;
   name: string;
   preferredTimeRange?: TimeSlot;
+  key?: string;
 }
 
 export interface Student extends Person {
@@ -150,6 +151,8 @@ export interface BrokenRule {
   description: string;
   scoreImpact: string;
   lessonIds: number[];
+  studentKeys: string[];
+  teacherKeys: string[];
 }
 
 export interface SolveResponse {

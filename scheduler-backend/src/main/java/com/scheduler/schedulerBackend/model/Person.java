@@ -1,6 +1,11 @@
 package com.scheduler.schedulerBackend.model;
 
+import java.util.Locale;
+
 public abstract class Person {
+
+    protected String id;
+
     protected String name;
     protected TimeSlot preferredTimeRange;
 
@@ -14,6 +19,18 @@ public abstract class Person {
     public Person(String name, TimeSlot preferredTimeRange) {
         this.name = name;
         this.preferredTimeRange = preferredTimeRange;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = (id == null || id.isBlank()) ? null : id.trim();
+    }
+
+    public String getKey() {
+        return id != null ? id : (name == null ? "" : name.trim().toLowerCase(Locale.ROOT));
     }
 
     public String getName() {

@@ -6,7 +6,7 @@ import {
 } from "../../types";
 import { ASSUMED_MAX_CLASS_SIZE, ASSUMED_MIN_CLASS_SIZE } from "../../constants";
 import { getTheme } from "../../utils";
-import { roomKey } from "./identity";
+import { personKey, roomKey } from "./identity";
 import type { TimeTableProps } from "./types";
 import "./TimeTable.css";
 
@@ -45,22 +45,29 @@ export function buildRoomGrid(lessonList: Lesson[], roomList: Room[]): RoomGrid 
   return { byCell, elsewhere };
 }
 
+const NAMED = "bg-amber-300/25 rounded px-1 -mx-1 font-semibold";
+
 const LessonCard = ({
   lesson,
   minStudents,
   maxStudents,
   isHighlighted,
+  namedStudentKeys,
+  namedTeacherKeys,
 }: {
   lesson: Lesson;
   minStudents: number;
   maxStudents: number;
   isHighlighted: boolean;
+  namedStudentKeys: Set<string>;
+  namedTeacherKeys: Set<string>;
 }) => {
   const { teacher, instrument, students } = lesson;
   const { base, light } = getTheme(instrument);
   const count = students?.length ?? 0;
   const tooSmall = count < minStudents;
   const full = count >= maxStudents;
+  const teacherNamed = namedTeacherKeys.has(personKey(teacher));
 
   return (
     <div
@@ -73,16 +80,24 @@ const LessonCard = ({
       }`}
     >
       <div className={`cell-header rounded-t-lg ${base} px-2 py-1`}>
-        {instrumentLabel(instrument) + " - " + (teacher?.name ?? "unassigned")}
+        {instrumentLabel(instrument)} -{" "}
+        <span className={teacherNamed ? NAMED : ""}>
+          {teacher?.name ?? "unassigned"}
+        </span>
       </div>
       <div className="px-2 py-1 text-left">
         {count === 0 ? (
           <p className="opacity-70 italic">empty</p>
         ) : (
           <ul>
-            {students.map((student, index) => (
-              <li key={`${lesson.id ?? "lesson"}-${index}`}>{student.name}</li>
-            ))}
+            {students.map((student, index) => {
+              const named = namedStudentKeys.has(personKey(student));
+              return (
+                <li key={`${lesson.id ?? "lesson"}-${index}`}>
+                  <span className={named ? NAMED : ""}>{student.name}</span>
+                </li>
+              );
+            })}
           </ul>
         )}
 
@@ -104,9 +119,14 @@ export const TimeTable = ({
   lessonList,
   result = null,
   highlightedLessonIds = [],
+  highlightedStudentKeys = [],
+  highlightedTeacherKeys = [],
 }: TimeTableProps) => {
   const minStudents = result?.minStudentsPerClass ?? ASSUMED_MIN_CLASS_SIZE;
   const maxStudents = result?.maxStudentsPerClass ?? ASSUMED_MAX_CLASS_SIZE;
+
+  const namedStudentKeys = new Set(highlightedStudentKeys);
+  const namedTeacherKeys = new Set(highlightedTeacherKeys);
 
   const { byCell, elsewhere } = buildRoomGrid(lessonList, roomList);
 
@@ -149,6 +169,8 @@ export const TimeTable = ({
               minStudents={minStudents}
               maxStudents={maxStudents}
               isHighlighted={highlightedLessonIds.includes(lesson.id)}
+              namedStudentKeys={namedStudentKeys}
+              namedTeacherKeys={namedTeacherKeys}
             />
           ))}
         </div>

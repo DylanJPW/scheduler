@@ -13,6 +13,8 @@ export interface TimeTableProps {
   lessonList: Lesson[];
   result?: SolveResponse | null;
   highlightedLessonIds?: number[];
+  highlightedStudentKeys?: string[];
+  highlightedTeacherKeys?: string[];
 }
 
 export interface ScheduleViewProps {

@@ -20,6 +20,8 @@ public class TimeTableDTO {
     private int minStudentsPerClass;
     private int maxStudentsPerClass;
 
+    private List<BrokenRuleDTO> brokenRules = List.of();
+
     public TimeTableDTO(List<LessonDTO> lessonList, List<TimeSlot> timeSlotList) {
         this.lessonList = lessonList;
         this.timeSlotList = timeSlotList;
@@ -111,5 +113,13 @@ public class TimeTableDTO {
 
     public void setMaxStudentsPerClass(int maxStudentsPerClass) {
         this.maxStudentsPerClass = maxStudentsPerClass;
+    }
+
+    public List<BrokenRuleDTO> getBrokenRules() {
+        return brokenRules;
+    }
+
+    public void setBrokenRules(List<BrokenRuleDTO> brokenRules) {
+        this.brokenRules = brokenRules == null ? List.of() : brokenRules;
     }
 }
