@@ -65,8 +65,9 @@ const ResultBanner = ({
         <ul className="pt-3 flex flex-col gap-1 print:hidden">
           {brokenRules.map((rule) => {
             const isActive = selectedRule === rule.constraintName;
-            const canShow = rule.lessonIds.length > 0;
-            const people = rule.studentKeys.length + rule.teacherKeys.length;
+            const canShow = (rule.lessonIds?.length ?? 0) > 0;
+            const people =
+              (rule.studentKeys?.length ?? 0) + (rule.teacherKeys?.length ?? 0);
 
             return (
               <li key={rule.constraintName}>

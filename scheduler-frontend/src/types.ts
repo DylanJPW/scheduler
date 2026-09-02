@@ -150,9 +150,9 @@ export interface BrokenRule {
   constraintName: string;
   description: string;
   scoreImpact: string;
-  lessonIds: number[];
-  studentKeys: string[];
-  teacherKeys: string[];
+  lessonIds?: number[];
+  studentKeys?: string[];
+  teacherKeys?: string[];
 }
 
 export interface SolveResponse {

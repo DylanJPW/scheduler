@@ -118,13 +118,16 @@ export function validateInput({
   /* ------------------------------------------------------- dates of birth */
 
   const withoutDob = students.filter((s) => blank(s.dateOfBirth));
-  if (withoutDob.length > 0 && withoutDob.length < students.length) {
+  if (withoutDob.length > 0) {
+    const nobodyHasOne = withoutDob.length === students.length;
     problems.push({
       id: "student-no-dob",
       severity: "warning",
-      message: `${withoutDob.length} ${plural(withoutDob.length, "student has", "students have")} no date of birth. They are still scheduled, but the rule that puts younger students earlier in the evening will pass over them.`,
+      message: nobodyHasOne
+        ? "No student has a date of birth, so nothing is pulling younger students earlier in the evening. Fill the column in, or leave it if age does not matter this year."
+        : `${withoutDob.length} ${plural(withoutDob.length, "student has", "students have")} no date of birth. They are still scheduled, but the rule that puts younger students earlier in the evening will pass over them.`,
       list: "students",
-      entityIds: withoutDob.map((s) => s.id),
+      entityIds: nobodyHasOne ? undefined : withoutDob.map((s) => s.id),
     });
   }
 
