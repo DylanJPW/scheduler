@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type {
   ColDef,
   EntityId,
@@ -22,6 +22,7 @@ interface InputAccordionProps<T extends WithId> {
   makeBlank: () => T;
   familyIds?: string[];
   highlight?: Highlight | null;
+  toolbarActions?: ReactNode;
 }
 
 interface UndoState<T> {
@@ -81,6 +82,7 @@ export const InputAccordion = <T extends object & WithId>({
   makeBlank,
   familyIds = [],
   highlight = null,
+  toolbarActions = null,
 }: InputAccordionProps<T>) => {
   const { dark, base, light } = getTheme(label);
   const id = `${label}-accordion`;
@@ -338,6 +340,7 @@ export const InputAccordion = <T extends object & WithId>({
                 Clear sort
               </button>
             )}
+            {toolbarActions}
           </div>
 
           {pinned && (

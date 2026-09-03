@@ -10,6 +10,7 @@ import {
 import { TimeSlotInput } from "./TimeSlotInput";
 import { useInputPage } from "./useInputPage";
 import { SolvePanel } from "./SolvePanel";
+import { ImportStudentsDialog, type ImportMode } from "./ImportStudentsDialog";
 import { ScheduleViews } from "../TimeTable/ScheduleViews";
 import type { ColDef, Highlight } from "./types";
 import { mapDictToKeyValue } from "../shared/utils";
@@ -109,6 +110,12 @@ export const InputPage = () => {
   } = useInputPage();
 
   const [highlight, setHighlight] = useState<Highlight | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+
+  const importStudents = (imported: Student[], mode: ImportMode) => {
+    setStudents(mode === "replace" ? imported : [...students, ...imported]);
+    setImportOpen(false);
+  };
 
   const teacherColDefs = useMemo(() => buildTeacherColDefs(rooms), [rooms]);
 
@@ -184,6 +191,15 @@ export const InputPage = () => {
           makeBlank={newStudent}
           familyIds={familyIds}
           highlight={highlight}
+          toolbarActions={
+            <button
+              type="button"
+              className="rounded-lg px-3 py-1 bg-blue-800 hover:bg-blue-700 cursor-pointer"
+              onClick={() => setImportOpen(true)}
+            >
+              Import from a spreadsheet
+            </button>
+          }
         />
 
         <InputAccordion<Teacher>
@@ -206,6 +222,14 @@ export const InputPage = () => {
           error={error}
         />
       </div>
+
+      {importOpen && (
+        <ImportStudentsDialog
+          existingCount={students.length}
+          onClose={() => setImportOpen(false)}
+          onImport={importStudents}
+        />
+      )}
 
       <ScheduleViews
         timeSlotList={timeSlotList}
