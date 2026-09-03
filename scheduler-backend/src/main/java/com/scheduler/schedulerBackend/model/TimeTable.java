@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.scheduler.schedulerBackend.config.SchedulingRules;
 import com.scheduler.schedulerBackend.enums.Instrument;
+import com.scheduler.schedulerBackend.utils.LocalDateDeserialiser;
 import com.scheduler.schedulerBackend.utils.LocalTimeDeserialiser;
 import org.optaplanner.core.api.domain.solution.PlanningEntityCollectionProperty;
 import org.optaplanner.core.api.domain.solution.PlanningScore;
@@ -13,6 +14,7 @@ import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -59,6 +61,10 @@ public class TimeTable {
 
     private int lengthOfLesson;
 
+    @JsonDeserialize(using = LocalDateDeserialiser.class)
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate referenceDate;
+
     public TimeTable() {
         this.lessonList = new ArrayList<>();
         this.timeSlotList = new ArrayList<>();
@@ -92,6 +98,7 @@ public class TimeTable {
 
     public final void generateSchedule() {
         validate();
+        stampStudentAges();
 
         if (this.timeSlotList == null || this.timeSlotList.isEmpty()) {
             this.timeSlotList = generateTimeSlots(dayStart, dayEnd, lengthOfLesson);
@@ -103,6 +110,15 @@ public class TimeTable {
             this.studentAssignmentList = generateStudentAssignments(studentList);
         }
         this.roomList = prepareRooms(this.roomList);
+    }
+
+    private void stampStudentAges() {
+        if (referenceDate == null) {
+            referenceDate = LocalDate.now();
+        }
+        for (Student student : studentList) {
+            student.deriveAge(referenceDate);
+        }
     }
 
     private List<Room> prepareRooms(List<Room> supplied) {
@@ -283,6 +299,14 @@ public class TimeTable {
 
     public void setDayEnd(LocalTime dayEnd) {
         this.dayEnd = dayEnd;
+    }
+
+    public LocalDate getReferenceDate() {
+        return referenceDate;
+    }
+
+    public void setReferenceDate(LocalDate referenceDate) {
+        this.referenceDate = referenceDate;
     }
 
     public int getLengthOfLesson() {

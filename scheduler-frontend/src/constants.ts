@@ -16,4 +16,4 @@ export const DEFAULT_ROOM_NAMES = [
 export const ASSUMED_MIN_CLASS_SIZE = 2;
 export const ASSUMED_MAX_CLASS_SIZE = 6;
 
-export const EXPECTED_SOLVE_MS = 15_000;
+export const EXPECTED_SOLVE_MS = 30_000;

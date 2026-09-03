@@ -1,11 +1,6 @@
 import { useMemo } from "react";
-import {
-  instrumentLabel,
-  type EntityId,
-  type Lesson,
-  type Teacher,
-} from "../../types";
-import { findPerson, hasId, nameKey } from "./identity";
+import { instrumentLabel, type Lesson, type Teacher } from "../../types";
+import { findPerson, nameKey, personKey } from "./identity";
 import type { ScheduleViewProps } from "./types";
 
 export interface TeacherEvening {
@@ -19,37 +14,32 @@ export function buildTeacherEvenings(
   teachers: Teacher[],
 ): TeacherEvening[] {
   const evenings: TeacherEvening[] = [];
-  const byId = new Map<EntityId, TeacherEvening>();
+  const byKey = new Map<string, TeacherEvening>();
   const byName = new Map<string, TeacherEvening>();
 
-  for (const teacher of teachers) {
+  const start = (teacher: Teacher): TeacherEvening => {
     const evening: TeacherEvening = {
-      key: hasId(teacher.id) ? String(teacher.id) : nameKey(teacher.name),
+      key: personKey(teacher),
       name: teacher.name || "(no name)",
       lessons: [],
     };
     evenings.push(evening);
-    if (hasId(teacher.id)) byId.set(teacher.id, evening);
+    byKey.set(evening.key, evening);
     if (!byName.has(nameKey(teacher.name))) {
       byName.set(nameKey(teacher.name), evening);
     }
+    return evening;
+  };
+
+  for (const teacher of teachers) {
+    start(teacher);
   }
 
   for (const lesson of lessonList) {
     const teacher = lesson.teacher;
     if (!teacher) continue;
 
-    let evening = findPerson(teacher, byId, byName);
-    if (!evening) {
-      evening = {
-        key: hasId(teacher.id) ? String(teacher.id) : nameKey(teacher.name),
-        name: teacher.name || "(no name)",
-        lessons: [],
-      };
-      evenings.push(evening);
-      if (hasId(teacher.id)) byId.set(teacher.id, evening);
-      byName.set(nameKey(teacher.name), evening);
-    }
+    const evening = findPerson(teacher, byKey, byName) ?? start(teacher);
     evening.lessons.push(lesson);
   }
 

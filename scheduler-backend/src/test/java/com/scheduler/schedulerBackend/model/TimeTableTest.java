@@ -5,6 +5,7 @@ import com.scheduler.schedulerBackend.enums.SkillLevel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,34 @@ class TimeTableTest {
         timeTable.setDayEnd(end == null ? null : LocalTime.parse(end));
         timeTable.setLengthOfLesson(length);
         return timeTable;
+    }
+
+    // ------------------------------------------------------------------ ages
+
+    @Test
+    @DisplayName("generating the schedule stamps every student's age from their date of birth")
+    void agesAreStampedBeforeSolving() {
+        List<Student> students = students(Instrument.FIDDLE, 2);
+        students.get(0).setDateOfBirth(LocalDate.of(2018, 5, 1));
+
+        TimeTable timeTable = timeTable(students, "18:00", "20:00", 30);
+        timeTable.setReferenceDate(LocalDate.of(2026, 9, 3));
+        timeTable.generateSchedule();
+
+        assertEquals(8, students.get(0).getAgeInYears().intValue());
+        assertNull(students.get(1).getAgeInYears(), "no date of birth means no age, not age zero");
+    }
+
+    @Test
+    @DisplayName("with no reference date given, one is pinned so the solve and its score agree")
+    void theReferenceDateIsPinned() {
+        TimeTable timeTable = timeTable(students(Instrument.FIDDLE, 4), "18:00", "20:00", 30);
+        assertNull(timeTable.getReferenceDate());
+
+        timeTable.generateSchedule();
+
+        assertNotNull(timeTable.getReferenceDate(),
+                "the age everyone is scored against must not drift during a solve");
     }
 
     // ------------------------------------------------------------ time slots

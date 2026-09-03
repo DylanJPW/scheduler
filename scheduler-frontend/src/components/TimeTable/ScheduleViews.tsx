@@ -22,13 +22,13 @@ const VIEWS: { key: ViewKey; label: string; blurb: string }[] = [
 const ResultBanner = ({
   result,
   brokenRules,
-  highlighted,
-  onHighlight,
+  selectedRule,
+  onSelectRule,
 }: {
   result: SolveResponse;
   brokenRules: BrokenRule[];
-  highlighted: number[];
-  onHighlight: (lessonIds: number[]) => void;
+  selectedRule: string | null;
+  onSelectRule: (constraintName: string | null) => void;
 }) => {
   const notes: string[] = [];
   if (result.emptyClassCount > 0) {
@@ -63,24 +63,31 @@ const ResultBanner = ({
 
       {brokenRules.length > 0 && (
         <ul className="pt-3 flex flex-col gap-1 print:hidden">
-          {brokenRules.map((rule, index) => {
-            const isActive =
-              rule.lessonIds.length > 0 &&
-              rule.lessonIds.every((id) => highlighted.includes(id));
+          {brokenRules.map((rule) => {
+            const isActive = selectedRule === rule.constraintName;
+            const canShow = (rule.lessonIds?.length ?? 0) > 0;
+            const people =
+              (rule.studentKeys?.length ?? 0) + (rule.teacherKeys?.length ?? 0);
+
             return (
-              <li key={`${rule.constraintName}-${index}`}>
+              <li key={rule.constraintName}>
                 <button
                   type="button"
+                  aria-pressed={isActive}
                   className={`text-left underline cursor-pointer ${
                     isActive ? "text-amber-200" : ""
                   }`}
-                  onClick={() => onHighlight(isActive ? [] : rule.lessonIds)}
+                  onClick={() =>
+                    onSelectRule(isActive ? null : rule.constraintName)
+                  }
                 >
                   {rule.description}
-                  {rule.lessonIds.length > 0 && (
+                  {canShow && (
                     <span className="opacity-70">
                       {" "}
                       — {isActive ? "hide" : "show me"}
+                      {people > 0 &&
+                        ` (${people} ${people === 1 ? "person" : "people"})`}
                     </span>
                   )}
                 </button>
@@ -102,10 +109,12 @@ export const ScheduleViews = ({
   result,
 }: ScheduleViewsProps) => {
   const [view, setView] = useState<ViewKey>("grid");
-  const [highlighted, setHighlighted] = useState<number[]>([]);
+  const [selectedRule, setSelectedRule] = useState<string | null>(null);
 
   const brokenRules = result?.brokenRules ?? [];
   const solved = lessonList.length > 0;
+
+  const active = brokenRules.find((rule) => rule.constraintName === selectedRule);
 
   return (
     <section className="w-full border border-slate-600 rounded-lg printable">
@@ -129,8 +138,8 @@ export const ScheduleViews = ({
         <ResultBanner
           result={result}
           brokenRules={brokenRules}
-          highlighted={highlighted}
-          onHighlight={setHighlighted}
+          selectedRule={selectedRule}
+          onSelectRule={setSelectedRule}
         />
       )}
 
@@ -167,7 +176,9 @@ export const ScheduleViews = ({
           roomList={roomList}
           lessonList={lessonList}
           result={result}
-          highlightedLessonIds={highlighted}
+          highlightedLessonIds={active?.lessonIds ?? []}
+          highlightedStudentKeys={active?.studentKeys ?? []}
+          highlightedTeacherKeys={active?.teacherKeys ?? []}
         />
       )}
       {view === "student" && (

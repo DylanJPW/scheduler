@@ -1,8 +1,12 @@
 package com.scheduler.schedulerBackend.service;
 
+import com.scheduler.schedulerBackend.model.BrokenRuleDTO;
 import com.scheduler.schedulerBackend.model.TimeTable;
 import com.scheduler.schedulerBackend.model.TimeTableDTO;
 import com.scheduler.schedulerBackend.model.TimeTableMapper;
+import org.optaplanner.core.api.score.ScoreExplanation;
+import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
+import org.optaplanner.core.api.solver.SolutionManager;
 import org.optaplanner.core.api.solver.SolverJob;
 import org.optaplanner.core.api.solver.SolverManager;
 import org.slf4j.Logger;
@@ -18,11 +22,14 @@ public class TimeTableService {
     private static final Logger log = LoggerFactory.getLogger(TimeTableService.class);
 
     private final SolverManager<TimeTable, UUID> solverManager;
+    private final SolutionManager<TimeTable, HardSoftScore> solutionManager;
     private final TimeTableMapper mapper;
 
     public TimeTableService(SolverManager<TimeTable, UUID> solverManager,
+                            SolutionManager<TimeTable, HardSoftScore> solutionManager,
                             TimeTableMapper mapper) {
         this.solverManager = solverManager;
+        this.solutionManager = solutionManager;
         this.mapper = mapper;
     }
 
@@ -47,7 +54,17 @@ public class TimeTableService {
             throw new IllegalStateException("Solving failed.", e);
         }
 
+        ScoreExplanation<TimeTable, HardSoftScore> explanation = solutionManager.explain(solution);
+
+        TimeTableDTO dto = mapper.toTimeTableDTOs(solution, explanation);
+
         log.info("Solved with score {}", solution.getScore());
-        return mapper.toTimeTableDTOs(solution);
+        for (BrokenRuleDTO rule : dto.getBrokenRules()) {
+            log.info("  {}: {} ({})", rule.getConstraintName(), rule.getScoreImpact(),
+                    rule.getDescription());
+        }
+        log.debug("Full score explanation:\n{}", explanation.getSummary());
+
+        return dto;
     }
 }

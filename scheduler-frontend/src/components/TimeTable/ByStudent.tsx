@@ -5,12 +5,15 @@ import {
   type Lesson,
   type Student,
 } from "../../types";
-import { hasId, nameKey } from "./identity";
+import { isIdentified, nameKey, personKey } from "./identity";
 import type { ScheduleViewProps } from "./types";
 
 interface Placement {
   id: EntityId | undefined;
+  key: string;
+  identified: boolean;
   name: string;
+  age: number | undefined;
   familyId: string;
   instrument: string;
   teacherName: string;
@@ -26,7 +29,10 @@ export function buildPlacements(lessonList: Lesson[]): Placement[] {
     for (const student of lesson.students ?? []) {
       placements.push({
         id: student.id,
+        key: personKey(student),
+        identified: isIdentified(student),
         name: student.name,
+        age: student.ageInYears,
         familyId: student.familyId?.trim().toLowerCase() ?? "",
         instrument: lesson.instrument,
         teacherName: lesson.teacher?.name ?? "unassigned",
@@ -53,19 +59,16 @@ export function findUnplaced(
   students: Student[],
   placements: Placement[],
 ): Student[] {
-  const placedIds = new Set<EntityId>();
-  const placedNames = new Set<string>();
 
-  for (const placement of placements) {
-    if (hasId(placement.id)) placedIds.add(placement.id);
-    placedNames.add(nameKey(placement.name));
+  const identified = placements.some((placement) => placement.identified);
+
+  if (identified) {
+    const placedKeys = new Set(placements.map((placement) => placement.key));
+    return students.filter((student) => !placedKeys.has(personKey(student)));
   }
 
-  return students.filter(
-    (student) =>
-      !(hasId(student.id) && placedIds.has(student.id)) &&
-      !placedNames.has(nameKey(student.name)),
-  );
+  const placedNames = new Set(placements.map((p) => nameKey(p.name)));
+  return students.filter((student) => !placedNames.has(nameKey(student.name)));
 }
 
 export const ByStudent = ({ lessonList, students }: ScheduleViewProps) => {
@@ -99,6 +102,7 @@ export const ByStudent = ({ lessonList, students }: ScheduleViewProps) => {
         <thead className="border-b border-slate-600">
           <tr>
             <th className="text-left px-3 py-2">Student</th>
+            <th className="text-left px-3 py-2">Age</th>
             <th className="text-left px-3 py-2">Family</th>
             <th className="text-left px-3 py-2">Instrument</th>
             <th className="text-left px-3 py-2">Time</th>
@@ -118,6 +122,9 @@ export const ByStudent = ({ lessonList, students }: ScheduleViewProps) => {
                 className={startsNewFamily ? "border-t-2 border-t-slate-500" : ""}
               >
                 <td className="text-left px-3 py-2">{placement.name}</td>
+                <td className="text-left px-3 py-2 opacity-80">
+                  {placement.age ?? "—"}
+                </td>
                 <td className="text-left px-3 py-2 opacity-80">
                   {placement.familyId || "—"}
                 </td>

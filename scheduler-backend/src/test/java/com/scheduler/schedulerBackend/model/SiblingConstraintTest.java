@@ -7,6 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.optaplanner.test.api.score.stream.ConstraintVerifier;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -18,13 +22,30 @@ class SiblingConstraintTest {
             ConstraintVerifier.build(new TimeTableConstraintProvider(), TimeTable.class,
                     Lesson.class, StudentAssignment.class);
 
+    private final Teacher teacher = new Teacher("Teacher", List.of(Instrument.FIDDLE));
+    private final Room room = new Room("room-1", "Room 1");
+
     private long nextId = 0;
 
     private Lesson lessonAt(String start) {
         LocalTime startTime = LocalTime.parse(start);
         Lesson lesson = new Lesson(nextId++, Instrument.FIDDLE);
         lesson.setTimeSlot(new TimeSlot(startTime, startTime.plusMinutes(SLOT_MINUTES)));
+        lesson.setTeacher(teacher);
+        lesson.setRoom(room);
         return lesson;
+    }
+
+    private static Object[] givenAll(StudentAssignment... assignments) {
+        Set<Lesson> lessons = new LinkedHashSet<>();
+        for (StudentAssignment assignment : assignments) {
+            if (assignment.getLesson() != null) {
+                lessons.add(assignment.getLesson());
+            }
+        }
+        List<Object> facts = new ArrayList<>(lessons);
+        facts.addAll(List.of(assignments));
+        return facts.toArray();
     }
 
     private StudentAssignment assignment(String name, String familyId, Lesson lesson) {
@@ -40,8 +61,8 @@ class SiblingConstraintTest {
     @DisplayName("siblings in the same time slot cost nothing")
     void siblingsAtTheSameTimeAreFree() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "murphy", lessonAt("18:00")),
-                        assignment("Cian", "murphy", lessonAt("18:00")))
+                .given(givenAll(assignment("Aoife", "murphy", lessonAt("18:00")),
+                        assignment("Cian", "murphy", lessonAt("18:00"))))
                 .penalizesBy(0);
     }
 
@@ -50,8 +71,8 @@ class SiblingConstraintTest {
     void siblingsInTheSameClassAreFree() {
         Lesson sharedLesson = lessonAt("18:00");
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "murphy", sharedLesson),
-                        assignment("Cian", "murphy", sharedLesson))
+                .given(givenAll(assignment("Aoife", "murphy", sharedLesson),
+                        assignment("Cian", "murphy", sharedLesson)))
                 .penalizesBy(0);
     }
 
@@ -61,8 +82,8 @@ class SiblingConstraintTest {
     @DisplayName("siblings one slot apart are penalised once")
     void oneSlotApart() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "murphy", lessonAt("18:00")),
-                        assignment("Cian", "murphy", lessonAt("18:30")))
+                .given(givenAll(assignment("Aoife", "murphy", lessonAt("18:00")),
+                        assignment("Cian", "murphy", lessonAt("18:30"))))
                 .penalizesBy(1);
     }
 
@@ -70,8 +91,8 @@ class SiblingConstraintTest {
     @DisplayName("the penalty grows with the size of the gap")
     void penaltyGrowsWithTheGap() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "murphy", lessonAt("18:00")),
-                        assignment("Cian", "murphy", lessonAt("19:30")))
+                .given(givenAll(assignment("Aoife", "murphy", lessonAt("18:00")),
+                        assignment("Cian", "murphy", lessonAt("19:30"))))
                 .penalizesBy(3);
     }
 
@@ -79,9 +100,9 @@ class SiblingConstraintTest {
     @DisplayName("three siblings are charged once per pair, not once per ordering")
     void threeSiblingsCountEachPairOnce() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "murphy", lessonAt("18:00")),
+                .given(givenAll(assignment("Aoife", "murphy", lessonAt("18:00")),
                         assignment("Cian", "murphy", lessonAt("18:30")),
-                        assignment("Saoirse", "murphy", lessonAt("19:00")))
+                        assignment("Saoirse", "murphy", lessonAt("19:00"))))
                 .penalizesBy(4);
     }
 
@@ -91,8 +112,8 @@ class SiblingConstraintTest {
     @DisplayName("students with no family id are never treated as siblings")
     void studentsWithoutAFamilyAreIgnored() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", null, lessonAt("18:00")),
-                        assignment("Cian", null, lessonAt("19:30")))
+                .given(givenAll(assignment("Aoife", null, lessonAt("18:00")),
+                        assignment("Cian", null, lessonAt("19:30"))))
                 .penalizesBy(0);
     }
 
@@ -100,8 +121,8 @@ class SiblingConstraintTest {
     @DisplayName("a blank family id does not group strangers together")
     void blankFamilyIdIsIgnored() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "", lessonAt("18:00")),
-                        assignment("Cian", "   ", lessonAt("19:30")))
+                .given(givenAll(assignment("Aoife", "", lessonAt("18:00")),
+                        assignment("Cian", "   ", lessonAt("19:30"))))
                 .penalizesBy(0);
     }
 
@@ -109,8 +130,8 @@ class SiblingConstraintTest {
     @DisplayName("two different families are not siblings")
     void differentFamiliesAreIgnored() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "murphy", lessonAt("18:00")),
-                        assignment("Cian", "byrne", lessonAt("19:30")))
+                .given(givenAll(assignment("Aoife", "murphy", lessonAt("18:00")),
+                        assignment("Cian", "byrne", lessonAt("19:30"))))
                 .penalizesBy(0);
     }
 
@@ -118,8 +139,8 @@ class SiblingConstraintTest {
     @DisplayName("family ids that differ only by case or spacing still match")
     void familyIdMatchingIsForgiving() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "Murphy", lessonAt("18:00")),
-                        assignment("Cian", " murphy ", lessonAt("18:30")))
+                .given(givenAll(assignment("Aoife", "Murphy", lessonAt("18:00")),
+                        assignment("Cian", " murphy ", lessonAt("18:30"))))
                 .penalizesBy(1);
     }
 
@@ -127,10 +148,10 @@ class SiblingConstraintTest {
     @DisplayName("one sibling pair does not leak into another family's score")
     void familiesAreScoredSeparately() {
         constraintVerifier.verifyThat(TimeTableConstraintProvider::siblingsScheduledApart)
-                .given(assignment("Aoife", "murphy", lessonAt("18:00")),
+                .given(givenAll(assignment("Aoife", "murphy", lessonAt("18:00")),
                         assignment("Cian", "murphy", lessonAt("18:30")),
                         assignment("Niamh", "byrne", lessonAt("18:00")),
-                        assignment("Oisín", "byrne", lessonAt("19:00")))
+                        assignment("Oisín", "byrne", lessonAt("19:00"))))
                 .penalizesBy(3); // 1 for the Murphys + 2 for the Byrnes
     }
 

@@ -9,8 +9,6 @@ import java.time.LocalTime;
 
 public class TimeTableConstraintProvider implements ConstraintProvider {
 
-    private static final int SMALL_CLASS_PENALTY = 100;
-
     @Override
     public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
         return new Constraint[] {
@@ -29,6 +27,8 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 teacherDoesNotPreferTime(constraintFactory),
                 teacherOutsidePreferredRoom(constraintFactory),
                 siblingsScheduledApart(constraintFactory),
+                preferEarlierTimeSlots(constraintFactory),
+                youngStudentsScheduledLate(constraintFactory),
         };
     }
 
@@ -87,7 +87,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
         return factory.forEach(StudentAssignment.class)
                 .groupBy(StudentAssignment::getLesson, ConstraintCollectors.count())
                 .filter((lesson, count) -> count < SchedulingRules.MIN_STUDENTS_PER_CLASS)
-                .penalize(HardSoftScore.ofSoft(SMALL_CLASS_PENALTY),
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.SMALL_CLASS_PENALTY),
                         (lesson, count) -> SchedulingRules.MIN_STUDENTS_PER_CLASS - count)
                 .asConstraint("Class Too Small");
     }
@@ -97,7 +97,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 .ifNotExists(StudentAssignment.class,
                         Joiners.equal(lesson -> lesson, StudentAssignment::getLesson))
                 .penalize(HardSoftScore.ofSoft(
-                        SMALL_CLASS_PENALTY * SchedulingRules.MIN_STUDENTS_PER_CLASS))
+                        SchedulingRules.SMALL_CLASS_PENALTY * SchedulingRules.MIN_STUDENTS_PER_CLASS))
                 .asConstraint("Empty Class");
     }
 
@@ -107,7 +107,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                         Joiners.equal(StudentAssignment::getLesson, (Lesson lesson) -> lesson))
                 .filter((sa, lesson) -> isOutsidePreference(
                         lessonStartOf(lesson), sa.getStudent().getPreferredTimeRange()))
-                .penalize(HardSoftScore.ONE_SOFT,
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.PREFERRED_TIME_PENALTY),
                         (sa, lesson) -> slotsOutsidePreference(
                                 lessonStartOf(lesson),
                                 sa.getStudent().getPreferredTimeRange(),
@@ -119,7 +119,7 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
         return factory.forEach(Lesson.class)
                 .filter(lesson -> isOutsidePreference(
                         lessonStartOf(lesson), lesson.getTeacher().getPreferredTimeRange()))
-                .penalize(HardSoftScore.ONE_SOFT,
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.PREFERRED_TIME_PENALTY),
                         lesson -> slotsOutsidePreference(
                                 lessonStartOf(lesson),
                                 lesson.getTeacher().getPreferredTimeRange(),
@@ -160,10 +160,46 @@ public class TimeTableConstraintProvider implements ConstraintProvider {
                 .asConstraint("Siblings Scheduled Apart");
     }
 
+    Constraint preferEarlierTimeSlots(ConstraintFactory factory) {
+        // Fill the evening from the front.
+        // Every class is charged once for each time slot that starts before it.
+        return factory.forEach(Lesson.class)
+                .join(TimeSlot.class,
+                        Joiners.greaterThan(
+                                (Lesson lesson) -> lesson.getTimeSlot().getStartTime(),
+                                (TimeSlot slot) -> slot.getStartTime()))
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.LATE_SLOT_PENALTY))
+                .asConstraint("Prefer Earlier Time Slots");
+    }
+
+    Constraint youngStudentsScheduledLate(ConstraintFactory factory) {
+        // Small children home before the teenagers. Charged per slot late, per year under the
+        // pivot, so the evening sorts itself youngest-first. Unknown age is never charged.
+        return factory.forEach(StudentAssignment.class)
+                .filter(sa -> yearsUnderPivot(sa.getStudent()) > 0)
+                .join(Lesson.class,
+                        Joiners.equal(StudentAssignment::getLesson, (Lesson lesson) -> lesson))
+                .join(TimeSlot.class,
+                        Joiners.greaterThan(
+                                (StudentAssignment sa, Lesson lesson) ->
+                                        lesson.getTimeSlot().getStartTime(),
+                                (TimeSlot slot) -> slot.getStartTime()))
+                .penalize(HardSoftScore.ofSoft(SchedulingRules.YOUNG_STUDENT_LATE_PENALTY),
+                        (sa, lesson, slot) -> yearsUnderPivot(sa.getStudent()))
+                .asConstraint("Young Students Scheduled Late");
+    }
+
     // ------------------------------------------------------- shared helpers
 
     private static boolean hasSiblingGroup(StudentAssignment sa) {
         return sa.getStudent() != null && sa.getStudent().getFamilyId() != null;
+    }
+
+    static int yearsUnderPivot(Student student) {
+        if (student == null || student.getAgeInYears() == null) {
+            return 0;
+        }
+        return Math.max(0, SchedulingRules.YOUTH_PIVOT_AGE - student.getAgeInYears());
     }
 
     static int slotsApart(Lesson a, Lesson b) {

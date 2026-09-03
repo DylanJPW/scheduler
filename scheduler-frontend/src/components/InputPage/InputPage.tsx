@@ -30,6 +30,7 @@ const studentColDefs: ColDef[] = [
     options: mapDictToKeyValue(SkillLevel),
   },
   { name: "Family", field: "familyId", type: "family" },
+  { name: "Date of Birth", field: "dateOfBirth", type: "date" },
   {
     name: "Preferred Time",
     field: "preferredTimeRange",
@@ -75,6 +76,7 @@ const newStudent = (): Student => ({
   name: "",
   instrument: "",
   skillLevel: "",
+  dateOfBirth: "",
 });
 
 const newTeacher = (): Teacher => ({

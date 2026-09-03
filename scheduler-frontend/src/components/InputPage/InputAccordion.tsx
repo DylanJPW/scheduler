@@ -32,6 +32,8 @@ interface UndoState<T> {
 
 const UNDO_MS = 10_000;
 
+const TODAY = new Date().toISOString().slice(0, 10);
+
 function optionLabel(options: KeyValue[] | undefined, key: string): string {
   return options?.find((o) => o.key === key)?.value ?? key;
 }
@@ -226,6 +228,19 @@ export const InputAccordion = <T extends object & WithId>({
           options={col.options ?? []}
           value={(raw as string[]) ?? []}
           onChange={(val) => setField(item, col.field, val)}
+        />
+      );
+    }
+
+    if (type === "date") {
+      return (
+        <input
+          aria-label={fieldLabel}
+          className={`w-full rounded-lg px-2 py-0.5 ${dark}`}
+          type="date"
+          max={TODAY}
+          value={(raw as string) ?? ""}
+          onChange={(e) => setField(item, col.field, e.target.value)}
         />
       );
     }
